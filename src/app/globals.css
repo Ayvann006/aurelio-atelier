@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Inter:wght@300;400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-cormorant: 'Cormorant Garamond', serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: #090909; color: #F5F0E8; font-family: var(--font-inter); font-weight: 300; overflow-x: hidden; }
+
+@layer components {
+  .btn-gold {
+    @apply inline-flex items-center justify-center border border-dorado text-dorado px-8 py-3 text-xs tracking-widest uppercase transition-all duration-300 hover:bg-dorado hover:text-negro cursor-pointer;
+  }
+  .btn-gold-fill {
+    @apply inline-flex items-center justify-center bg-dorado text-negro px-8 py-3 text-xs tracking-widest uppercase transition-all duration-300 hover:bg-dorado2 cursor-pointer;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center border border-marfil/30 text-marfil px-8 py-3 text-xs tracking-widest uppercase transition-all duration-300 hover:bg-marfil/10 cursor-pointer;
+  }
+  .gold-line { @apply w-10 h-px bg-dorado; }
+  .section-label { @apply text-dorado text-xs tracking-widest uppercase block mb-3; }
+  .section-title { @apply font-cormorant text-4xl md:text-5xl font-light leading-tight mb-4; }
+  .input-dark {
+    @apply w-full bg-negro2 border border-marfil/10 text-marfil px-4 py-3 text-sm font-light placeholder:text-marfil/30 focus:outline-none focus:border-dorado/50 transition-colors;
+  }
+  .select-dark {
+    @apply w-full bg-negro2 border border-marfil/10 text-marfil px-4 py-3 text-sm font-light focus:outline-none focus:border-dorado/50 transition-colors appearance-none;
+  }
+  .card-dark {
+    @apply bg-negro2 border border-marfil/5 p-6;
+  }
+  .badge-estado {
+    @apply inline-block text-xs px-3 py-1 tracking-wider uppercase;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #090909; }
+::-webkit-scrollbar-thumb { background: #C9A96E40; }
+::-webkit-scrollbar-thumb:hover { background: #C9A96E; }
+
+/* Selection */
+::selection { background: #C9A96E30; color: #F5F0E8; }
