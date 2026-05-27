@@ -53,7 +53,7 @@ export default function InstagramSection() {
         </div>
 
         <p className="text-center text-marfil/20 text-xs mt-4 tracking-wider">
-          Actualizá las fotos desde el panel de administración
+          Síguenos en Instagram para no perderte ninguna novedad
         </p>
       </div>
     </section>

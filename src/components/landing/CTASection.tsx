@@ -9,12 +9,12 @@ export default function CTASection() {
       />
       <div className="absolute inset-0 bg-negro/70" />
       <div className="relative">
-        <span className="block text-dorado text-xs tracking-[0.4em] uppercase mb-5">Atención Exclusiva · Plazas Limitadas</span>
+        <span className="block text-dorado text-xs tracking-[0.4em] uppercase mb-5">Atención Exclusiva</span>
         <h2 className="font-cormorant text-5xl md:text-6xl italic font-light leading-tight mb-4">
           Tu momento<br />más especial<br /><em>comienza aquí</em>
         </h2>
         <p className="text-marfil/40 text-sm tracking-wider mb-10">
-          Primera entrevista sin cargo · Lunes a Sábados 10:00 — 19:00 hs
+          Lunes a Sábados 10:00 — 19:00 hs
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/citas" className="btn-gold-fill px-12 py-4 text-xs">

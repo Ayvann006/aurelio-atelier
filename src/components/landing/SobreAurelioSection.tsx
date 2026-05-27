@@ -14,11 +14,11 @@ export default function SobreAurelioSection() {
         <div>
           <span className="section-label">El Creador</span>
           <blockquote className="font-cormorant text-3xl md:text-4xl italic font-light leading-snug mb-6 pl-5 border-l-2 border-dorado">
-            "Cada mujer lleva una historia que merece ser contada en seda y bordado."
+            “Creo vestidos que no solo se lucen… se sienten, se viven y dejan una huella inolvidable.”
           </blockquote>
           <p className="text-marfil/50 text-sm leading-loose mb-6">
-            Aurelio Martínez es un diseñador de alta costura con más de 15 años vistiendo a las mujeres más importantes de Latinoamérica. Su atelier en Palermo Hollywood es un santuario donde cada vestido nace de un proceso artesanal riguroso y una atención completamente personalizada.<br /><br />
-            Especializado en novias, quinceañeras, gala y certámenes de belleza, Aurelio combina técnicas europeas de bordado con la pasión del alma latinoamericana.
+            Aurelio Martínez es diseñador de alta costura especializado en la creación de vestidos exclusivos para novias, galas y certámenes de belleza. Su estilo se caracteriza por la elegancia, el lujo y la atención minuciosa a cada detalle, combinando siluetas sofisticadas con bordados, cristales y acabados artesanales que realzan la esencia de cada mujer.
+            Con una visión artística refinada y una fuerte pasión por la moda, Aurelio transforma cada diseño en una pieza única, pensada para destacar con presencia, glamour y personalidad en momentos inolvidables.
           </p>
           <p className="font-cormorant text-xl italic text-dorado mb-8">— Aurelio Martínez</p>
           <div className="grid grid-cols-3 gap-4 border-t border-marfil/8 pt-6 mb-8">

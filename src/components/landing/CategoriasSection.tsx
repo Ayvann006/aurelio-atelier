@@ -11,7 +11,7 @@ export default function CategoriasSection() {
   return (
     <section className="py-24 px-6 md:px-14" id="colecciones">
       <div className="max-w-7xl mx-auto mb-12">
-        <span className="section-label">Colecciones 2025</span>
+        <span className="section-label">Colecciones</span>
         <h2 className="section-title">Cada ocasión,<br /><em className="italic">una obra maestra</em></h2>
         <div className="gold-line" />
       </div>
