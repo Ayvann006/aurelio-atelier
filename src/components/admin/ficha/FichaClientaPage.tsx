@@ -589,7 +589,35 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
                   <button onClick={enviarPorWA} className="btn-gold flex-1 justify-center py-2 text-xs flex items-center gap-2">
                     <MessageCircle size={12} /> Enviar por WhatsApp
                   </button>
-                  <button onClick={() => toast.info('PDF disponible después del deploy en Vercel')}
+                 <button onClick={async () => {
+                      try {
+                        toast.info('Generando PDF...')
+                        const token = sessionStorage.getItem('admin_token') || ''
+                        const res = await fetch('/api/pdf/presupuesto', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+                          body: JSON.stringify({
+                            cliente_nombre: cliente?.nombre,
+                            cliente_email: cliente?.email,
+                            cliente_telefono: cliente?.telefono,
+                            descripcion: prespDescripcion,
+                            total: parseFloat(prespTotal) || 0,
+                            moneda,
+                            anticipo: parseFloat(prespAnticipo) || 0,
+                            cuotas: parseInt(prespCuotas) || 1,
+                            fecha_pago: prespFechaPago,
+                            estado: prespEstado,
+                            tipo_vestido: ficha.tipo_vestido,
+                            color_vestido: ficha.color_vestido,
+                            fecha_entrega: ficha.fecha_entrega,
+                          }),
+                        })
+                        const json = await res.json()
+                        if (!res.ok) throw new Error(json.error)
+                        const w = window.open('', '_blank')
+                        if (w) { w.document.write(json.html); w.document.close(); setTimeout(() => w.print(), 500) }
+                      } catch (e: any) { toast.error(e.message) }
+                    }}
                     className="btn-ghost flex-1 justify-center py-2 text-xs flex items-center gap-2">
                     <Download size={12} /> Exportar PDF
                   </button>
