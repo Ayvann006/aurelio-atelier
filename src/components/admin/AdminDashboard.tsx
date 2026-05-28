@@ -42,40 +42,33 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [categorias, setCategorias] = useState<any[]>([])
   const [cargando, setCargando] = useState(false)
 
-  // Search states
   const [busquedaPedidos, setBusquedaPedidos] = useState('')
   const [busquedaClientes, setBusquedaClientes] = useState('')
   const [filtroClientes, setFiltroClientes] = useState('')
   const [busquedaGlobal, setBusquedaGlobal] = useState('')
   const [filtroPedidoEstado, setFiltroPedidoEstado] = useState('')
-
-  // Dashboard period
   const [periodo, setPeriodo] = useState<'semana' | 'mes' | 'total'>('mes')
 
-  // Product form
+  // Form states
   const [showNuevoProducto, setShowNuevoProducto] = useState(false)
   const [productoEditando, setProductoEditando] = useState<string | null>(null)
   const [nuevoProducto, setNuevoProducto] = useState({ nombre: '', descripcion: '', precio: '', categoria: 'batas', stock: '5', slug: '', imagenes: [] as string[], destacado: false })
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Category form
   const [showNuevaCat, setShowNuevaCat] = useState(false)
   const [nuevaCatNombre, setNuevaCatNombre] = useState('')
 
-  // Coleccion form
   const [showNuevaColeccion, setShowNuevaColeccion] = useState(false)
   const [coleccionEditando, setColeccionEditando] = useState<string | null>(null)
   const [nuevaColeccion, setNuevaColeccion] = useState({ nombre: '', descripcion: '', imagen_principal: '', imagenes: [] as string[], categoria: 'novias', año: '2025', destacado: false, orden: '0' })
   const [subiendoFotoCol, setSubiendoFotoCol] = useState(false)
   const fileInputColRef = useRef<HTMLInputElement>(null)
 
-  // Horario form
   const [showNuevoHorario, setShowNuevoHorario] = useState(false)
   const [nuevoHorario, setNuevoHorario] = useState({ fecha: '', fecha_fin: '', todo_el_dia: true, hora_inicio: '10:00', hora_fin_hora: '19:00', motivo: '' })
   const [bloqueoPorRango, setBloqueoPorRango] = useState(false)
 
-  // Cliente form
   const [showNuevoCliente, setShowNuevoCliente] = useState(false)
   const [nuevoCliente, setNuevoCliente] = useState({ nombre: '', email: '', telefono: '', tipo_evento_habitual: '' })
 
@@ -102,7 +95,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     cargar('colecciones'); cargar('clientes'); cargar('horarios'); cargar('categorias')
   }, [])
 
-  // ── Export CSV ──
   function exportCSV(tipo: 'clientes' | 'pedidos') {
     if (tipo === 'clientes') {
       const rows = [['Nombre','Email','Teléfono','Evento','Ciudad','Citas']]
@@ -123,7 +115,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     URL.revokeObjectURL(url)
   }
 
-  // ── CRUD functions ──
   async function actualizarCita(id: string, estado: string) {
     const res = await fetch('/api/admin/citas', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ id, estado }) })
     if (res.ok) { setCitas(cs => cs.map(c => c.id === id ? { ...c, estado: estado as any } : c)); toast.success('Cita actualizada') }
@@ -146,7 +137,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   async function ocultarPedidoCancelado(id: string) {
-    // Soft delete - mark as hidden but keep record
     const res = await fetch('/api/admin/pedidos', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ id, oculto: true }) })
     if (res.ok) { setPedidos(ps => ps.filter(p => p.id !== id)); toast.success('Pedido removido de la vista') }
   }
@@ -201,7 +191,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   async function eliminarCategoria(id: string) {
-    if (!confirm('¿Eliminar esta categoría? Los productos con esta categoría quedarán sin categoría.')) return
+    if (!confirm('¿Eliminar esta categoría?')) return
     const res = await fetch('/api/admin/categorias', { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) })
     if (res.ok) { setCategorias(cs => cs.filter(c => c.id !== id)); toast.success('Categoría eliminada') }
     else { const err = await res.json(); toast.error(err.error || 'Error') }
@@ -224,8 +214,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     if (!nuevaColeccion.nombre || !nuevaColeccion.imagen_principal) { toast.error('Nombre y foto requeridos'); return }
     const method = coleccionEditando ? 'PATCH' : 'POST'
     const body = coleccionEditando
-      ? { id: coleccionEditando, ...nuevaColeccion, imagenes: nuevaColeccion.imagenes, año: parseInt(nuevaColeccion.año), orden: parseInt(nuevaColeccion.orden), activo: true }
-      : { ...nuevaColeccion, imagenes: nuevaColeccion.imagenes, año: parseInt(nuevaColeccion.año), orden: parseInt(nuevaColeccion.orden), activo: true }
+      ? { id: coleccionEditando, ...nuevaColeccion, año: parseInt(nuevaColeccion.año), orden: parseInt(nuevaColeccion.orden), activo: true }
+      : { ...nuevaColeccion, año: parseInt(nuevaColeccion.año), orden: parseInt(nuevaColeccion.orden), activo: true }
     const res = await fetch('/api/admin/colecciones', { method, headers: authHeaders(), body: JSON.stringify(body) })
     if (res.ok) {
       const data = await res.json()
@@ -237,7 +227,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   async function eliminarColeccion(id: string) {
-    if (!confirm('¿Eliminar este diseño de la galería?')) return
+    if (!confirm('¿Eliminar este diseño?')) return
     await fetch('/api/admin/colecciones', { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) })
     setColecciones(cs => cs.filter(c => c.id !== id)); toast.success('Diseño eliminado')
   }
@@ -253,7 +243,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   async function eliminarCliente(id: string) {
-    if (!confirm('¿Eliminar esta clienta y todos sus datos? Esta acción no se puede deshacer.')) return
+    if (!confirm('¿Eliminar esta clienta?')) return
     await fetch('/api/admin/clientes', { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) })
     setClientes(cs => cs.filter(c => c.id !== id)); toast.success('Clienta eliminada')
   }
@@ -262,7 +252,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     if (!nuevoHorario.fecha) { toast.error('Fecha requerida'); return }
     const bloques = []
     if (bloqueoPorRango && nuevoHorario.fecha_fin) {
-      // Generate one entry per day in range
       const start = new Date(nuevoHorario.fecha + 'T00:00:00')
       const end = new Date(nuevoHorario.fecha_fin + 'T00:00:00')
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
@@ -279,12 +268,11 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   async function desbloquearHorario(id: string) {
-    if (!confirm('¿Desbloquear este horario?')) return
+    if (!confirm('¿Desbloquear?')) return
     await fetch('/api/admin/horarios', { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) })
     setHorarios(hs => hs.filter(h => h.id !== id)); toast.success('Horario desbloqueado')
   }
 
-  // ── Metrics ──
   function filtrarPorPeriodo(items: any[], campo = 'created_at') {
     const ahora = new Date()
     return items.filter(i => {
@@ -298,22 +286,14 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const pedidosFiltrados = filtrarPorPeriodo(pedidos).filter(p => p.estado !== 'cancelado')
   const ingresosMes = pedidosFiltrados.reduce((a, p) => a + (p.total || 0), 0)
-
-  // Mes anterior
   const mesAnterior = new Date(); mesAnterior.setMonth(mesAnterior.getMonth() - 1)
   const ingresosMesAnterior = pedidos.filter(p => {
     if (!p.created_at || p.estado === 'cancelado') return false
     const f = new Date(p.created_at)
     return f.getMonth() === mesAnterior.getMonth() && f.getFullYear() === mesAnterior.getFullYear()
   }).reduce((a, p) => a + (p.total || 0), 0)
-
-  const variacionIngresos = ingresosMesAnterior > 0
-    ? Math.round(((ingresosMes - ingresosMesAnterior) / ingresosMesAnterior) * 100)
-    : 0
-
+  const variacionIngresos = ingresosMesAnterior > 0 ? Math.round(((ingresosMes - ingresosMesAnterior) / ingresosMesAnterior) * 100) : 0
   const citasHoy = citas.filter(c => c.fecha === new Date().toISOString().split('T')[0] && c.estado === 'confirmada').length
-
-  // Ventas por día
   const ventasPorDia = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i))
     const key = d.toISOString().split('T')[0]
@@ -323,8 +303,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     return { label, total, nCitas, key }
   })
   const maxVenta = Math.max(...ventasPorDia.map(v => v.total), 1)
-
-  // Top productos
   const conteoProductos: Record<string, { nombre: string; cantidad: number; ingresos: number }> = {}
   pedidosFiltrados.forEach(p => {
     (p.items as any[] || []).forEach((item: any) => {
@@ -334,13 +312,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     })
   })
   const topProductos = Object.values(conteoProductos).sort((a, b) => b.cantidad - a.cantidad).slice(0, 5)
-
-  // Destinos envío
   const conteoProvincias: Record<string, number> = {}
   pedidosFiltrados.forEach(p => { const prov = (p as any).provincia_envio || 'Sin especificar'; conteoProvincias[prov] = (conteoProvincias[prov] || 0) + 1 })
   const topProvincias = Object.entries(conteoProvincias).sort((a, b) => b[1] - a[1]).slice(0, 5)
-
-  // Filtered lists
   const pedidosMostrar = pedidos.filter(p => {
     if ((p as any).oculto) return false
     const q = busquedaPedidos.toLowerCase()
@@ -348,7 +322,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     const matchEstado = !filtroPedidoEstado || p.estado === filtroPedidoEstado
     return matchSearch && matchEstado
   })
-
   const clientesMostrar = clientes.filter(c => {
     const q = busquedaClientes.toLowerCase()
     const matchSearch = !q || c.nombre?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.telefono?.includes(q)
@@ -366,9 +339,31 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     { id: 'horarios', label: 'Horarios', icon: Clock },
   ]
 
+  // ── Input component that doesn't lose focus ──
+  function FormInput({ label, value, onChange, type = 'text', placeholder = '', className = 'input-dark', rows }: {
+    label?: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; className?: string; rows?: number
+  }) {
+    const ref = useRef<any>(null)
+    const [localVal, setLocalVal] = useState(value)
+    useEffect(() => { setLocalVal(value) }, [value])
+    if (rows) return (
+      <div>
+        {label && <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">{label}</label>}
+        <textarea ref={ref} value={localVal} onChange={e => { setLocalVal(e.target.value); onChange(e.target.value) }}
+          className={`${className} resize-none w-full`} rows={rows} placeholder={placeholder} />
+      </div>
+    )
+    return (
+      <div>
+        {label && <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">{label}</label>}
+        <input ref={ref} type={type} value={localVal} onChange={e => { setLocalVal(e.target.value); onChange(e.target.value) }}
+          className={className} placeholder={placeholder} />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-negro flex">
-      {/* Sidebar */}
       <aside className="w-56 bg-negro2 border-r border-marfil/5 flex flex-col flex-shrink-0">
         <div className="p-5 border-b border-marfil/5">
           <p className="font-cormorant text-sm tracking-widest uppercase text-marfil/80">Aurelio Martínez</p>
@@ -389,11 +384,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
       </aside>
 
-      {/* Main */}
       <main className="flex-1 overflow-auto">
         <div className="p-6">
 
-          {/* ══ DASHBOARD ══ */}
           {tab === 'dashboard' && (
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -410,13 +403,11 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </button>
                 </div>
               </div>
-
-              {/* KPIs */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                 {[
                   { label: 'Citas hoy', value: citasHoy, sub: null, icon: Calendar, color: 'text-dorado' },
                   { label: 'Pedidos activos', value: pedidosFiltrados.length, sub: null, icon: ShoppingBag, color: 'text-blue-400/70' },
-                  { label: `Ingresos`, value: formatPrecio(ingresosMes), sub: variacionIngresos !== 0 ? `${variacionIngresos > 0 ? '+' : ''}${variacionIngresos}% vs mes ant.` : null, icon: TrendingUp, color: variacionIngresos >= 0 ? 'text-green-400/70' : 'text-red-400/70' },
+                  { label: 'Ingresos', value: formatPrecio(ingresosMes), sub: variacionIngresos !== 0 ? `${variacionIngresos > 0 ? '+' : ''}${variacionIngresos}% vs mes ant.` : null, icon: TrendingUp, color: variacionIngresos >= 0 ? 'text-green-400/70' : 'text-red-400/70' },
                   { label: 'Clientas', value: clientes.length, sub: null, icon: Users, color: 'text-purple-400/70' },
                 ].map(({ label, value, sub, icon: Icon, color }) => (
                   <div key={label} className="card-dark">
@@ -429,9 +420,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </div>
                 ))}
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                {/* Gráfico ventas */}
                 <div className="card-dark md:col-span-2">
                   <p className="text-xs text-marfil/40 tracking-widest uppercase mb-5">Ventas últimos 7 días</p>
                   <div className="flex items-end gap-2 h-28">
@@ -448,8 +437,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     ))}
                   </div>
                 </div>
-
-                {/* Top productos */}
                 <div className="card-dark">
                   <p className="text-xs text-marfil/40 tracking-widest uppercase mb-4">Más vendidos</p>
                   {topProductos.length === 0
@@ -468,9 +455,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   }
                 </div>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Destinos */}
                 <div className="card-dark">
                   <div className="flex items-center gap-2 mb-4">
                     <MapPin size={12} className="text-dorado" strokeWidth={1.5} />
@@ -484,10 +469,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           const pct = Math.round((cant / total) * 100)
                           return (
                             <div key={prov}>
-                              <div className="flex justify-between text-xs mb-1">
-                                <span className="text-marfil/60">{prov}</span>
-                                <span className="text-dorado">{cant} ({pct}%)</span>
-                              </div>
+                              <div className="flex justify-between text-xs mb-1"><span className="text-marfil/60">{prov}</span><span className="text-dorado">{cant} ({pct}%)</span></div>
                               <div className="h-1 bg-marfil/5"><div className="h-full bg-dorado/40" style={{width:`${pct}%`}} /></div>
                             </div>
                           )
@@ -495,8 +477,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </div>
                   }
                 </div>
-
-                {/* Próximas citas */}
                 <div className="card-dark">
                   <p className="text-xs text-marfil/40 tracking-widest uppercase mb-4">Próximas citas</p>
                   <div className="space-y-2.5">
@@ -513,42 +493,32 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           )}
 
-          {/* ══ CITAS ══ */}
           {tab === 'citas' && (
             <div>
               <div className="flex items-center justify-between mb-5">
                 <h1 className="font-cormorant text-2xl italic">Citas</h1>
-                <button onClick={() => cargar('citas')} className="flex items-center gap-2 text-marfil/40 text-xs hover:text-dorado transition-colors">
-                  <RefreshCw size={13} /> Actualizar
-                </button>
+                <button onClick={() => cargar('citas')} className="flex items-center gap-2 text-marfil/40 text-xs hover:text-dorado transition-colors"><RefreshCw size={13} /> Actualizar</button>
               </div>
               <CalendarioCitas citas={citas} onActualizar={actualizarCita} clientes={clientes} />
             </div>
           )}
 
-          {/* ══ PEDIDOS ══ */}
           {tab === 'pedidos' && (
             <div>
               <div className="flex items-center justify-between mb-5">
                 <h1 className="font-cormorant text-2xl italic">Pedidos</h1>
-                <button onClick={() => exportCSV('pedidos')} className="flex items-center gap-1.5 text-xs text-marfil/40 hover:text-dorado border border-marfil/10 px-3 py-1.5 transition-all">
-                  <Download size={12} /> CSV
-                </button>
+                <button onClick={() => exportCSV('pedidos')} className="flex items-center gap-1.5 text-xs text-marfil/40 hover:text-dorado border border-marfil/10 px-3 py-1.5 transition-all"><Download size={12} /> CSV</button>
               </div>
-
-              {/* Búsqueda y filtros */}
               <div className="flex gap-3 mb-5">
                 <div className="relative flex-1">
                   <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-marfil/30" />
-                  <input value={busquedaPedidos} onChange={e => setBusquedaPedidos(e.target.value)}
-                    placeholder="Buscar por número, nombre o email..." className="input-dark pl-9 text-xs py-2.5 w-full" />
+                  <input value={busquedaPedidos} onChange={e => setBusquedaPedidos(e.target.value)} placeholder="Buscar por número, nombre o email..." className="input-dark pl-9 text-xs py-2.5 w-full" />
                 </div>
                 <select value={filtroPedidoEstado} onChange={e => setFiltroPedidoEstado(e.target.value)} className="select-dark text-xs py-2.5 w-36">
                   <option value="">Todos los estados</option>
                   {['pendiente','pagado','preparando','enviado','entregado','cancelado'].map(e => <option key={e} value={e}>{e}</option>)}
                 </select>
               </div>
-
               <div className="space-y-px">
                 {pedidosMostrar.map(p => (
                   <div key={p.id} className={`card-dark ${p.estado === 'cancelado' ? 'opacity-50' : ''}`}>
@@ -561,26 +531,17 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <p className="font-medium text-sm">{p.cliente_nombre}</p>
                         <p className="text-marfil/40 text-xs">{p.cliente_email}</p>
                         {(p as any).provincia_envio && <p className="text-marfil/30 text-xs flex items-center gap-1 mt-0.5"><MapPin size={9} />{(p as any).provincia_envio}</p>}
-                        <div className="mt-1.5 space-y-0.5">
-                          {(p.items as any[]).map((item: any, i: number) => <p key={i} className="text-marfil/40 text-xs">{item.cantidad}x {item.nombre}</p>)}
-                        </div>
+                        <div className="mt-1.5 space-y-0.5">{(p.items as any[]).map((item: any, i: number) => <p key={i} className="text-marfil/40 text-xs">{item.cantidad}x {item.nombre}</p>)}</div>
                       </div>
                       <div className="text-right">
                         <p className="font-cormorant text-xl">{formatPrecio(p.total)}</p>
                         <p className="text-marfil/30 text-xs">{new Date(p.created_at).toLocaleDateString('es-AR')}</p>
                       </div>
                     </div>
-
                     {p.estado !== 'cancelado' ? (
                       <div className="mt-4 pt-4 border-t border-marfil/5">
                         <div className="flex items-center gap-0 flex-wrap">
-                          {[
-                            { key: 'pendiente', label: 'Pendiente' },
-                            { key: 'pagado', label: 'Aceptado' },
-                            { key: 'preparando', label: 'Preparando' },
-                            { key: 'enviado', label: 'Enviado' },
-                            { key: 'entregado', label: 'Entregado' },
-                          ].map((e, idx, arr) => {
+                          {[{key:'pendiente',label:'Pendiente'},{key:'pagado',label:'Aceptado'},{key:'preparando',label:'Preparando'},{key:'enviado',label:'Enviado'},{key:'entregado',label:'Entregado'}].map((e, idx, arr) => {
                             const order = ['pendiente','pagado','preparando','enviado','entregado']
                             const posActual = order.indexOf(p.estado)
                             const posEste = order.indexOf(e.key)
@@ -596,17 +557,13 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               </div>
                             )
                           })}
-                          <button onClick={() => cancelarPedido(p.id)} className="ml-auto text-xs px-2.5 py-1.5 border border-red-400/20 text-red-400/50 hover:bg-red-400/10 transition-all flex items-center gap-1">
-                            <XCircle size={10} /> Cancelar
-                          </button>
+                          <button onClick={() => cancelarPedido(p.id)} className="ml-auto text-xs px-2.5 py-1.5 border border-red-400/20 text-red-400/50 hover:bg-red-400/10 transition-all flex items-center gap-1"><XCircle size={10} /> Cancelar</button>
                         </div>
                       </div>
                     ) : (
                       <div className="mt-3 pt-3 border-t border-marfil/5 flex items-center justify-between">
-                        <span className="text-red-400/50 text-xs">Cancelado · el registro se mantiene</span>
-                        <button onClick={() => ocultarPedidoCancelado(p.id)} className="text-xs text-marfil/25 hover:text-marfil/50 transition-colors flex items-center gap-1">
-                          <X size={10} /> Ocultar
-                        </button>
+                        <span className="text-red-400/50 text-xs">Cancelado</span>
+                        <button onClick={() => ocultarPedidoCancelado(p.id)} className="text-xs text-marfil/25 hover:text-marfil/50 transition-colors flex items-center gap-1"><X size={10} /> Ocultar</button>
                       </div>
                     )}
                   </div>
@@ -616,23 +573,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           )}
 
-          {/* ══ PRODUCTOS ══ */}
           {tab === 'productos' && (
             <div>
               <div className="flex items-center justify-between mb-5">
                 <h1 className="font-cormorant text-2xl italic">Productos</h1>
                 <div className="flex gap-2">
-                  <button onClick={() => setShowNuevaCat(!showNuevaCat)} className="btn-ghost flex items-center gap-1.5 py-2 px-4 text-xs">
-                    <Tag size={12} /> Categorías
-                  </button>
+                  <button onClick={() => setShowNuevaCat(!showNuevaCat)} className="btn-ghost flex items-center gap-1.5 py-2 px-4 text-xs"><Tag size={12} /> Categorías</button>
                   <button onClick={() => { setProductoEditando(null); setNuevoProducto({ nombre:'', descripcion:'', precio:'', categoria: categorias[0]?.slug || 'batas', stock:'5', slug:'', imagenes:[], destacado:false }); setShowNuevoProducto(true) }}
-                    className="btn-gold flex items-center gap-1.5 py-2 px-4 text-xs">
-                    <Plus size={12} /> Nuevo
-                  </button>
+                    className="btn-gold flex items-center gap-1.5 py-2 px-4 text-xs"><Plus size={12} /> Nuevo</button>
                 </div>
               </div>
-
-              {/* Gestión categorías */}
               {showNuevaCat && (
                 <div className="card-dark mb-5 border border-dorado/15">
                   <p className="text-xs text-dorado tracking-widest uppercase mb-4">Gestión de categorías</p>
@@ -640,23 +590,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     {categorias.map(c => (
                       <div key={c.id} className={`flex items-center gap-2 border px-3 py-1.5 ${c.default ? 'border-marfil/10 text-marfil/40' : 'border-dorado/20 text-dorado/70'}`}>
                         <span className="text-xs">{c.nombre}</span>
-                        {!c.default && (
-                          <button onClick={() => eliminarCategoria(c.id)} className="text-red-400/50 hover:text-red-400 transition-colors">
-                            <X size={11} />
-                          </button>
-                        )}
+                        {!c.default && <button onClick={() => eliminarCategoria(c.id)} className="text-red-400/50 hover:text-red-400 transition-colors"><X size={11} /></button>}
                       </div>
                     ))}
                   </div>
                   <div className="flex gap-2">
-                    <input value={nuevaCatNombre} onChange={e => setNuevaCatNombre(e.target.value)}
-                      placeholder="Nueva categoría..." className="input-dark flex-1 text-xs py-2" onKeyDown={e => e.key === 'Enter' && crearCategoria()} />
+                    <FormInput value={nuevaCatNombre} onChange={v => setNuevaCatNombre(v)} placeholder="Nueva categoría..." className="input-dark flex-1 text-xs py-2" />
                     <button onClick={crearCategoria} className="btn-gold px-4 text-xs py-2">Agregar</button>
                   </div>
                 </div>
               )}
-
-              {/* Formulario producto */}
               {showNuevoProducto && (
                 <div className="card-dark mb-5 border border-dorado/15">
                   <div className="flex items-center justify-between mb-4">
@@ -664,26 +607,23 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <button onClick={() => { setShowNuevoProducto(false); setProductoEditando(null) }}><X size={15} className="text-marfil/30" /></button>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Nombre *</label>
-                      <input value={nuevoProducto.nombre} onChange={e => setNuevoProducto(p => ({...p, nombre: e.target.value}))} className="input-dark" placeholder="Ej: Tiara Perlas" /></div>
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Precio ARS *</label>
-                      <input value={nuevoProducto.precio} onChange={e => setNuevoProducto(p => ({...p, precio: e.target.value}))} type="number" className="input-dark" /></div>
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Stock</label>
-                      <input value={nuevoProducto.stock} onChange={e => setNuevoProducto(p => ({...p, stock: e.target.value}))} type="number" className="input-dark" /></div>
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Categoría</label>
+                    <FormInput label="Nombre *" value={nuevoProducto.nombre} onChange={v => setNuevoProducto(p => ({...p, nombre: v}))} placeholder="Ej: Tiara Perlas" />
+                    <FormInput label="Precio ARS *" value={nuevoProducto.precio} onChange={v => setNuevoProducto(p => ({...p, precio: v}))} type="number" />
+                    <FormInput label="Stock" value={nuevoProducto.stock} onChange={v => setNuevoProducto(p => ({...p, stock: v}))} type="number" />
+                    <div>
+                      <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Categoría</label>
                       <select value={nuevoProducto.categoria} onChange={e => setNuevoProducto(p => ({...p, categoria: e.target.value}))} className="select-dark w-full">
                         {categorias.map(c => <option key={c.id} value={c.slug}>{c.nombre}</option>)}
-                      </select></div>
-                    <div className="col-span-2"><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Descripción</label>
-                      <textarea value={nuevoProducto.descripcion} onChange={e => setNuevoProducto(p => ({...p, descripcion: e.target.value}))} className="input-dark resize-none w-full" rows={2} /></div>
+                      </select>
+                    </div>
                     <div className="col-span-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-xs text-marfil/40 uppercase tracking-wider">Fotos del producto</label>
-                      </div>
+                      <FormInput label="Descripción" value={nuevoProducto.descripcion} onChange={v => setNuevoProducto(p => ({...p, descripcion: v}))} rows={2} />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-2">Fotos del producto</label>
                       <div className="flex gap-2 flex-wrap">
                         {nuevoProducto.imagenes.map((img, idx) => (
                           <div key={idx} className="relative w-16 h-20">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={img} alt="" className="w-full h-full object-cover" />
                             <button onClick={() => setNuevoProducto(p => ({...p, imagenes: p.imagenes.filter((_,i) => i !== idx)}))}
                               className="absolute -top-1 -right-1 w-4 h-4 bg-red-500/80 text-white flex items-center justify-center"><X size={9} /></button>
@@ -708,15 +648,11 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </div>
                 </div>
               )}
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-px">
                 {productos.map(p => (
                   <div key={p.id} className={`card-dark ${!p.activo ? 'opacity-40' : ''}`}>
                     <div className="flex gap-3 mb-3">
-                      {(p.imagenes || []).slice(0, 3).map((img, i) => (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img key={i} src={img} alt="" className="w-12 h-16 object-cover object-top flex-shrink-0" />
-                      ))}
+                      {(p.imagenes || []).slice(0, 3).map((img, i) => (<img key={i} src={img} alt="" className="w-12 h-16 object-cover object-top flex-shrink-0" />))}
                       {(!p.imagenes || p.imagenes.length === 0) && <div className="w-12 h-16 bg-negro3 flex items-center justify-center flex-shrink-0"><Package size={16} className="text-marfil/15" strokeWidth={0.5} /></div>}
                       <div className="flex-1 min-w-0">
                         <p className="text-dorado text-xs uppercase tracking-wider mb-0.5">{p.categoria}</p>
@@ -734,10 +670,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           className="w-14 bg-negro3 border border-marfil/10 text-marfil text-xs px-2 py-1 focus:outline-none focus:border-dorado/40" />
                       </div>
                       <div className="flex gap-1.5">
-                        <button onClick={() => toggleDestacado(p.id, !p.destacado)}
-                          className={`text-xs px-2.5 py-1.5 border transition-all flex items-center gap-1 ${p.destacado ? 'border-dorado/30 text-dorado bg-dorado/8' : 'border-marfil/10 text-marfil/30 hover:border-dorado/30 hover:text-dorado'}`}>
-                          <Star size={10} fill={p.destacado ? 'currentColor' : 'none'} />
-                        </button>
+                        <button onClick={() => toggleDestacado(p.id, !p.destacado)} className={`text-xs px-2.5 py-1.5 border transition-all flex items-center gap-1 ${p.destacado ? 'border-dorado/30 text-dorado bg-dorado/8' : 'border-marfil/10 text-marfil/30 hover:border-dorado/30 hover:text-dorado'}`}><Star size={10} fill={p.destacado ? 'currentColor' : 'none'} /></button>
                         <button onClick={() => { const prod = p as any; setNuevoProducto({ nombre:prod.nombre, descripcion:prod.descripcion||'', precio:String(prod.precio), categoria:prod.categoria, stock:String(prod.stock), slug:prod.slug, imagenes:prod.imagenes||[], destacado:prod.destacado||false }); setProductoEditando(p.id); setShowNuevoProducto(true) }}
                           className="text-xs px-2.5 py-1.5 border border-dorado/20 text-dorado/60 hover:bg-dorado/10 transition-all">Editar</button>
                         <button onClick={() => eliminarProducto(p.id)} className="text-xs px-2.5 py-1.5 border border-red-400/20 text-red-400/50 hover:bg-red-400/10 transition-all"><Trash2 size={11} /></button>
@@ -750,7 +683,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           )}
 
-          {/* ══ GALERÍAS ══ */}
           {tab === 'colecciones' && (
             <div>
               <div className="flex items-center justify-between mb-5">
@@ -758,7 +690,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <button onClick={() => { setColeccionEditando(null); setNuevaColeccion({ nombre:'', descripcion:'', imagen_principal:'', imagenes:[], categoria:'novias', año:'2025', destacado:false, orden:'0' }); setShowNuevaColeccion(true) }}
                   className="btn-gold flex items-center gap-1.5 py-2 px-4 text-xs"><Plus size={12} /> Agregar diseño</button>
               </div>
-
               {showNuevaColeccion && (
                 <div className="card-dark mb-5 border border-dorado/15">
                   <div className="flex items-center justify-between mb-4">
@@ -766,21 +697,24 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <button onClick={() => { setShowNuevaColeccion(false); setColeccionEditando(null) }}><X size={15} className="text-marfil/30" /></button>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Nombre *</label><input value={nuevaColeccion.nombre} onChange={e => setNuevaColeccion(c=>({...c,nombre:e.target.value}))} className="input-dark" placeholder="Ej: Sirena Aquamarina" /></div>
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Categoría *</label>
-                      <select value={nuevaColeccion.categoria} onChange={e => setNuevaColeccion(c=>({...c,categoria:e.target.value}))} className="select-dark w-full">
+                    <FormInput label="Nombre *" value={nuevaColeccion.nombre} onChange={v => setNuevaColeccion(c => ({...c, nombre: v}))} placeholder="Ej: Sirena Aquamarina" />
+                    <div>
+                      <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Categoría *</label>
+                      <select value={nuevaColeccion.categoria} onChange={e => setNuevaColeccion(c => ({...c, categoria: e.target.value}))} className="select-dark w-full">
                         <option value="novias">Novias</option><option value="quinceaneras">Quinceañeras</option><option value="gala">Gala</option><option value="miss">Miss</option>
-                      </select></div>
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Año</label><input value={nuevaColeccion.año} onChange={e => setNuevaColeccion(c=>({...c,año:e.target.value}))} type="number" className="input-dark" /></div>
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Orden</label><input value={nuevaColeccion.orden} onChange={e => setNuevaColeccion(c=>({...c,orden:e.target.value}))} type="number" className="input-dark" /></div>
-                    <div className="col-span-2"><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Descripción</label><textarea value={nuevaColeccion.descripcion} onChange={e => setNuevaColeccion(c=>({...c,descripcion:e.target.value}))} className="input-dark resize-none w-full" rows={2} /></div>
+                      </select>
+                    </div>
+                    <FormInput label="Año" value={nuevaColeccion.año} onChange={v => setNuevaColeccion(c => ({...c, año: v}))} type="number" />
+                    <FormInput label="Orden" value={nuevaColeccion.orden} onChange={v => setNuevaColeccion(c => ({...c, orden: v}))} type="number" />
+                    <div className="col-span-2">
+                      <FormInput label="Descripción" value={nuevaColeccion.descripcion} onChange={v => setNuevaColeccion(c => ({...c, descripcion: v}))} rows={2} />
+                    </div>
                     <div className="col-span-2">
                       <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-2">Foto principal *</label>
                       {nuevaColeccion.imagen_principal
                         ? <div className="relative w-28 h-36 group">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={nuevaColeccion.imagen_principal} alt="" className="w-full h-full object-cover" />
-                            <button onClick={() => setNuevaColeccion(c=>({...c,imagen_principal:''}))} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500/80 text-white flex items-center justify-center"><X size={10} /></button>
+                            <button onClick={() => setNuevaColeccion(c => ({...c, imagen_principal:''}))} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500/80 text-white flex items-center justify-center"><X size={10} /></button>
                           </div>
                         : <button onClick={() => fileInputColRef.current?.click()} disabled={subiendoFotoCol}
                             className="w-28 h-36 border border-dashed border-marfil/20 flex flex-col items-center justify-center gap-2 hover:border-dorado/40 transition-colors text-marfil/30 hover:text-dorado disabled:opacity-50">
@@ -790,66 +724,52 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       }
                       <input ref={fileInputColRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) subirFotoColeccion(e.target.files[0]); e.target.value='' }} />
                     </div>
-
-                  {/* Fotos adicionales slider */}
-                  <div className="col-span-2">
-                    <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-2">Fotos adicionales — slider</label>
-                    <div className="flex gap-2 flex-wrap">
-                      {(nuevaColeccion.imagenes || []).map((img, idx) => (
-                        <div key={idx} className="relative w-20 h-28 flex-shrink-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={img} alt="" className="w-full h-full object-cover object-top" />
-                          <button onClick={() => setNuevaColeccion(c => ({ ...c, imagenes: (c.imagenes || []).filter((_, i) => i !== idx) }))}
-                            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500/80 text-white flex items-center justify-center">
-                            <X size={10} />
-                          </button>
-                        </div>
-                      ))}
-                      <label className="w-20 h-28 border border-dashed border-marfil/20 flex flex-col items-center justify-center gap-1 hover:border-dorado/40 transition-colors text-marfil/30 hover:text-dorado cursor-pointer flex-shrink-0">
-                        {subiendoFotoCol ? <RefreshCw size={13} className="animate-spin" /> : <Upload size={13} />}
-                        <span style={{ fontSize: '10px' }}>{subiendoFotoCol ? 'Subiendo' : 'Agregar'}</span>
-                        <input type="file" accept="image/*" className="hidden" onChange={async e => {
-                          if (!e.target.files?.[0]) return
-                          const file = e.target.files[0]
-                          setSubiendoFotoCol(true)
-                          const reader = new FileReader()
-                          reader.readAsDataURL(file)
-                          reader.onload = async () => {
-                            const token = sessionStorage.getItem('admin_token') || ''
-                            const res = await fetch('/api/admin/upload', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
-                              body: JSON.stringify({ base64: reader.result, nombre: file.name })
-                            })
-                            const json = await res.json()
-                            if (res.ok && json.url) {
-                              setNuevaColeccion(c => ({ ...c, imagenes: [...(c.imagenes || []), json.url] }))
-                              toast.success('Foto adicional subida')
-                            } else toast.error('Error al subir')
-                            setSubiendoFotoCol(false)
-                          }
-                          e.target.value = ''
-                        }} />
+                    <div className="col-span-2">
+                      <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-2">Fotos adicionales — slider</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {(nuevaColeccion.imagenes || []).map((img, idx) => (
+                          <div key={idx} className="relative w-20 h-28 flex-shrink-0">
+                            <img src={img} alt="" className="w-full h-full object-cover object-top" />
+                            <button onClick={() => setNuevaColeccion(c => ({ ...c, imagenes: (c.imagenes || []).filter((_, i) => i !== idx) }))}
+                              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500/80 text-white flex items-center justify-center"><X size={10} /></button>
+                          </div>
+                        ))}
+                        <label className="w-20 h-28 border border-dashed border-marfil/20 flex flex-col items-center justify-center gap-1 hover:border-dorado/40 transition-colors text-marfil/30 hover:text-dorado cursor-pointer flex-shrink-0">
+                          {subiendoFotoCol ? <RefreshCw size={13} className="animate-spin" /> : <Upload size={13} />}
+                          <span style={{ fontSize: '10px' }}>{subiendoFotoCol ? 'Subiendo' : 'Agregar'}</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={async e => {
+                            if (!e.target.files?.[0]) return
+                            const file = e.target.files[0]
+                            setSubiendoFotoCol(true)
+                            const reader = new FileReader()
+                            reader.readAsDataURL(file)
+                            reader.onload = async () => {
+                              const token = sessionStorage.getItem('admin_token') || ''
+                              const res = await fetch('/api/admin/upload', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': token }, body: JSON.stringify({ base64: reader.result, nombre: file.name }) })
+                              const json = await res.json()
+                              if (res.ok && json.url) { setNuevaColeccion(c => ({ ...c, imagenes: [...(c.imagenes || []), json.url] })); toast.success('Foto adicional subida') }
+                              else toast.error('Error al subir')
+                              setSubiendoFotoCol(false)
+                            }
+                            e.target.value = ''
+                          }} />
+                        </label>
+                      </div>
+                      <p className="text-marfil/20 text-xs mt-1.5">Al hacer clic en el vestido se abre un slider con todas las fotos</p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" checked={nuevaColeccion.destacado} onChange={e => setNuevaColeccion(c => ({...c, destacado: e.target.checked}))} className="accent-dorado w-4 h-4" />
+                        <span className="text-sm">Marcar como destacado</span>
                       </label>
                     </div>
-                    <p className="text-marfil/20 text-xs mt-1.5">Al hacer clic en el vestido se abre un slider con todas las fotos</p>
                   </div>
-
-                  <div className="col-span-2">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" checked={nuevaColeccion.destacado} onChange={e => setNuevaColeccion(c=>({...c,destacado:e.target.checked}))} className="accent-dorado w-4 h-4" />
-                      <span className="text-sm">Marcar como destacado</span>
-                    </label>
-                  </div>
-                  </div>
-
                   <div className="flex gap-3 mt-4">
                     <button onClick={crearColeccion} className="btn-gold-fill flex-1 justify-center py-2.5 text-xs">{coleccionEditando ? 'Guardar' : 'Agregar'}</button>
                     <button onClick={() => { setShowNuevaColeccion(false); setColeccionEditando(null) }} className="btn-ghost flex-1 justify-center py-2.5 text-xs">Cancelar</button>
                   </div>
                 </div>
               )}
-
               {['novias','quinceaneras','gala','miss'].map(cat => {
                 const items = colecciones.filter(c => c.categoria === cat)
                 const labels: Record<string,string> = { novias:'Novias', quinceaneras:'Quinceañeras', gala:'Gala & Cóctel', miss:'Miss & Certámenes' }
@@ -864,7 +784,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         {items.map(c => (
                           <div key={c.id} className={`relative group ${!c.activo ? 'opacity-40' : ''}`}>
                             <div className="overflow-hidden bg-negro3" style={{aspectRatio:'2/3'}}>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={c.imagen_principal} alt={c.nombre} className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500" style={{filter:'brightness(0.6)'}} />
                             </div>
                             <div className="absolute inset-0 bg-gradient-to-t from-negro/90 via-transparent" />
@@ -887,7 +806,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           )}
 
-          {/* ══ CLIENTAS ══ */}
           {tab === 'clientes' && (
             <div>
               <div className="flex items-center justify-between mb-5">
@@ -897,7 +815,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <button onClick={() => setShowNuevoCliente(!showNuevoCliente)} className="btn-gold flex items-center gap-1.5 py-2 px-4 text-xs"><Plus size={12} /> Nueva</button>
                 </div>
               </div>
-
               {showNuevoCliente && (
                 <div className="card-dark mb-5 border border-dorado/15">
                   <div className="flex items-center justify-between mb-4">
@@ -905,14 +822,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <button onClick={() => setShowNuevoCliente(false)}><X size={15} className="text-marfil/30" /></button>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Nombre *</label><input value={nuevoCliente.nombre} onChange={e => setNuevoCliente(c=>({...c,nombre:e.target.value}))} className="input-dark" /></div>
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Email *</label><input value={nuevoCliente.email} onChange={e => setNuevoCliente(c=>({...c,email:e.target.value}))} type="email" className="input-dark" /></div>
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Teléfono</label><input value={nuevoCliente.telefono} onChange={e => setNuevoCliente(c=>({...c,telefono:e.target.value}))} className="input-dark" /></div>
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Tipo de evento</label>
-                      <select value={nuevoCliente.tipo_evento_habitual} onChange={e => setNuevoCliente(c=>({...c,tipo_evento_habitual:e.target.value}))} className="select-dark w-full">
+                    <FormInput label="Nombre *" value={nuevoCliente.nombre} onChange={v => setNuevoCliente(c => ({...c, nombre: v}))} />
+                    <FormInput label="Email *" value={nuevoCliente.email} onChange={v => setNuevoCliente(c => ({...c, email: v}))} type="email" />
+                    <FormInput label="Teléfono" value={nuevoCliente.telefono} onChange={v => setNuevoCliente(c => ({...c, telefono: v}))} />
+                    <div>
+                      <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Tipo de evento</label>
+                      <select value={nuevoCliente.tipo_evento_habitual} onChange={e => setNuevoCliente(c => ({...c, tipo_evento_habitual: e.target.value}))} className="select-dark w-full">
                         <option value="">Seleccionar</option>
                         {['novia','quinceanera','gala','miss','otro'].map(t => <option key={t} value={t} className="capitalize">{t}</option>)}
-                      </select></div>
+                      </select>
+                    </div>
                   </div>
                   <div className="flex gap-3 mt-4">
                     <button onClick={crearCliente} className="btn-gold-fill flex-1 justify-center py-2.5 text-xs">Agregar clienta</button>
@@ -920,20 +839,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </div>
                 </div>
               )}
-
-              {/* Búsqueda y filtros */}
               <div className="flex gap-3 mb-4">
                 <div className="relative flex-1">
                   <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-marfil/30" />
-                  <input value={busquedaClientes} onChange={e => setBusquedaClientes(e.target.value)}
-                    placeholder="Buscar por nombre, email o teléfono..." className="input-dark pl-9 text-xs py-2.5 w-full" />
+                  <input value={busquedaClientes} onChange={e => setBusquedaClientes(e.target.value)} placeholder="Buscar por nombre, email o teléfono..." className="input-dark pl-9 text-xs py-2.5 w-full" />
                 </div>
                 <select value={filtroClientes} onChange={e => setFiltroClientes(e.target.value)} className="select-dark text-xs py-2.5 w-40">
                   <option value="">Todos los eventos</option>
                   {['novia','quinceanera','gala','miss','otro'].map(e => <option key={e} value={e} className="capitalize">{e}</option>)}
                 </select>
               </div>
-
               <div className="space-y-px">
                 {clientesMostrar.map(c => (
                   <div key={c.id} className="card-dark flex flex-wrap items-center gap-4 cursor-pointer hover:border-dorado/15 transition-colors"
@@ -963,14 +878,12 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           )}
 
-          {/* ══ HORARIOS ══ */}
           {tab === 'horarios' && (
             <div>
               <div className="flex items-center justify-between mb-5">
                 <div><h1 className="font-cormorant text-2xl italic">Horarios Bloqueados</h1><p className="text-marfil/30 text-xs mt-0.5">Lunes a Sábados 10:00 — 19:00 hs</p></div>
                 <button onClick={() => setShowNuevoHorario(!showNuevoHorario)} className="btn-gold flex items-center gap-1.5 py-2 px-4 text-xs"><Plus size={12} /> Bloquear</button>
               </div>
-
               {showNuevoHorario && (
                 <div className="card-dark mb-5 border border-dorado/15">
                   <div className="flex items-center justify-between mb-4">
@@ -982,22 +895,25 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <span className="text-sm">Bloquear rango de fechas (ej: vacaciones)</span>
                   </label>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">{bloqueoPorRango ? 'Desde' : 'Fecha'} *</label>
-                      <input type="date" value={nuevoHorario.fecha} onChange={e => setNuevoHorario(h=>({...h,fecha:e.target.value}))} className="input-dark" /></div>
-                    {bloqueoPorRango && <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Hasta *</label>
-                      <input type="date" value={nuevoHorario.fecha_fin} onChange={e => setNuevoHorario(h=>({...h,fecha_fin:e.target.value}))} className="input-dark" /></div>}
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Motivo</label>
-                      <input value={nuevoHorario.motivo} onChange={e => setNuevoHorario(h=>({...h,motivo:e.target.value}))} placeholder="Vacaciones, feriado..." className="input-dark" /></div>
+                    <div>
+                      <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">{bloqueoPorRango ? 'Desde' : 'Fecha'} *</label>
+                      <input type="date" value={nuevoHorario.fecha} onChange={e => setNuevoHorario(h => ({...h, fecha: e.target.value}))} className="input-dark" />
+                    </div>
+                    {bloqueoPorRango && <div>
+                      <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Hasta *</label>
+                      <input type="date" value={nuevoHorario.fecha_fin} onChange={e => setNuevoHorario(h => ({...h, fecha_fin: e.target.value}))} className="input-dark" />
+                    </div>}
+                    <FormInput label="Motivo" value={nuevoHorario.motivo} onChange={v => setNuevoHorario(h => ({...h, motivo: v}))} placeholder="Vacaciones, feriado..." />
                     {!bloqueoPorRango && <div />}
                   </div>
                   <label className="flex items-center gap-3 cursor-pointer mt-3">
-                    <input type="checkbox" checked={nuevoHorario.todo_el_dia} onChange={e => setNuevoHorario(h=>({...h,todo_el_dia:e.target.checked}))} className="accent-dorado w-4 h-4" />
+                    <input type="checkbox" checked={nuevoHorario.todo_el_dia} onChange={e => setNuevoHorario(h => ({...h, todo_el_dia: e.target.checked}))} className="accent-dorado w-4 h-4" />
                     <span className="text-sm">Bloquear todo el día</span>
                   </label>
                   {!nuevoHorario.todo_el_dia && (
                     <div className="grid grid-cols-2 gap-4 mt-3">
-                      <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Desde</label><input type="time" value={nuevoHorario.hora_inicio} onChange={e => setNuevoHorario(h=>({...h,hora_inicio:e.target.value}))} className="input-dark" /></div>
-                      <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Hasta</label><input type="time" value={nuevoHorario.hora_fin_hora} onChange={e => setNuevoHorario(h=>({...h,hora_fin_hora:e.target.value}))} className="input-dark" /></div>
+                      <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Desde</label><input type="time" value={nuevoHorario.hora_inicio} onChange={e => setNuevoHorario(h => ({...h, hora_inicio: e.target.value}))} className="input-dark" /></div>
+                      <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Hasta</label><input type="time" value={nuevoHorario.hora_fin_hora} onChange={e => setNuevoHorario(h => ({...h, hora_fin_hora: e.target.value}))} className="input-dark" /></div>
                     </div>
                   )}
                   <div className="flex gap-3 mt-4">
@@ -1006,7 +922,6 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </div>
                 </div>
               )}
-
               <div className="space-y-px">
                 {horarios.map(h => (
                   <div key={h.id} className="card-dark flex items-center justify-between">

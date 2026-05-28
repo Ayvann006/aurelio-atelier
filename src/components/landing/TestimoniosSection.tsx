@@ -11,7 +11,7 @@ interface Resena {
 
 // Reseñas base — se muestran siempre
 const RESENAS_BASE: Resena[] = [
-  { autor: 'Valentina Rodríguez', texto: 'Aurelio transformó mi visión en el vestido más hermoso que jamás imaginé. Cada detalle fue pensado con una delicadeza que me hizo sentir única e irrepetible.', evento: 'Novia · Diciembre 2024', estrellas: 5, fuente: 'google' },
+  { autor: 'Ailen Velardez', texto: 'Super, super contenta con el trabajo de Aurelio. Un genio total. Super atento, cuidadoso y cariñoso. Desde el primer día me recibió de 10. El vestido que realizó fue un sueño. Super recomendado, si necesitan un vestido, no duden en ir con él. El mejor lejos', evento: 'Novia', estrellas: 5, fuente: 'google' },
   { autor: 'Isabella Mansilla', texto: 'El día de mis quince fue perfecto gracias al diseño de Aurelio. No hay palabras para describir la emoción de ver ese vestido terminado. Arte puro, desde el primer boceto.', evento: 'Quinceañera · Octubre 2024', estrellas: 5, fuente: 'google' },
   { autor: 'Camila Ferreira', texto: 'Gané el certamen y todos preguntaban quién era el diseñador. La atención del atelier es incomparable. Aurelio entiende lo que una reina necesita para brillar en el escenario.', evento: 'Miss Elegancia 2024', estrellas: 5, fuente: 'google' },
 ]
