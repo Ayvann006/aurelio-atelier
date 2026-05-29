@@ -11,7 +11,6 @@ import { formatPrecio, formatHora } from '@/lib/utils'
 import CalendarioCitas from './CalendarioCitas'
 import { toast } from 'sonner'
 import type { Cita, Pedido, Producto } from '@/types'
-import { StableInput, StableTextarea } from './StableInput'
 
 type Tab = 'dashboard' | 'citas' | 'pedidos' | 'productos' | 'colecciones' | 'clientes' | 'horarios'
 
@@ -31,28 +30,32 @@ const ESTADO_CITA_COLORS: Record<string, string> = {
   'no-asistio': 'text-marfil/30 bg-marfil/5',
 }
 
-// ── Input component that doesn't lose focus ──
-  function FormInput({ label, value, onChange, type = 'text', placeholder = '', className = 'input-dark', rows }: {
-    label?: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; className?: string; rows?: number
-  }) {
-    const ref = useRef<any>(null)
-    const [localVal, setLocalVal] = useState(value)
-    useEffect(() => { if (document.activeElement !== ref.current) setLocalVal(value) }, [value])
-    if (rows) return (
-      <div>
-        {label && <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">{label}</label>}
-        <textarea ref={ref} value={localVal} onChange={e => { setLocalVal(e.target.value); onChange(e.target.value) }}
-          className={`${className} resize-none w-full`} rows={rows} placeholder={placeholder} />
-      </div>
-    )
-    return (
-      <div>
-        {label && <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">{label}</label>}
-        <input ref={ref} type={type} value={localVal} onChange={e => { setLocalVal(e.target.value); onChange(e.target.value) }}
-          className={className} placeholder={placeholder} />
-      </div>
-    )
-  }
+// ── Uncontrolled input - syncs on blur, never loses focus ──
+function FormInput({ label, value, onChange, type = 'text', placeholder = '', className = 'input-dark', rows }: {
+  label?: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; className?: string; rows?: number
+}) {
+  const ref = useRef<any>(null)
+  // Sync from parent only when not focused
+  useEffect(() => {
+    if (ref.current && ref.current !== document.activeElement) {
+      ref.current.value = value
+    }
+  })
+  if (rows) return (
+    <div>
+      {label && <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">{label}</label>}
+      <textarea ref={ref} defaultValue={value} onInput={e => onChange((e.target as any).value)}
+        className={`${className} resize-none w-full`} rows={rows} placeholder={placeholder} />
+    </div>
+  )
+  return (
+    <div>
+      {label && <label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">{label}</label>}
+      <input ref={ref} type={type} defaultValue={value} onInput={e => onChange((e.target as any).value)}
+        className={className} placeholder={placeholder} />
+    </div>
+  )
+}
 
 export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const router = useRouter()
