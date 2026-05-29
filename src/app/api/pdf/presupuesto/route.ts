@@ -27,6 +27,7 @@ function generarHTML(data: any): string {
     fecha_entrega = '',
     fecha_presupuesto = new Date().toISOString().split('T')[0],
     numero = `P-${Date.now().toString().slice(-6)}`,
+    boceto = '',
   } = data
 
   const saldo = total - anticipo
@@ -56,6 +57,9 @@ function generarHTML(data: any): string {
   .field-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(245,240,232,0.35); margin-bottom: 4px; }
   .field-value { font-size: 13px; color: #F5F0E8; }
   .descripcion { background: rgba(245,240,232,0.03); border: 0.5px solid rgba(245,240,232,0.08); padding: 20px; margin-bottom: 40px; font-size: 13px; color: rgba(245,240,232,0.6); line-height: 1.7; font-style: italic; }
+  .boceto-section { display: flex; gap: 24px; margin-bottom: 40px; }
+  .boceto-img { width: 220px; height: 300px; object-fit: cover; border: 0.5px solid rgba(201,169,110,0.2); flex-shrink: 0; }
+  .boceto-desc { flex: 1; }
   .totals { border-top: 0.5px solid rgba(201,169,110,0.2); padding-top: 24px; margin-bottom: 40px; }
   .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; }
   .total-row.sub { color: rgba(245,240,232,0.5); }
@@ -110,9 +114,14 @@ function generarHTML(data: any): string {
     </div>` : ''}
   </div>
 
-  ${descripcion ? `
-  <div class="section-title">Descripcion del diseno</div>
-  <div class="descripcion">${descripcion}</div>
+  ${descripcion || boceto ? `
+  <div class="section-title">Diseno</div>
+  ${boceto ? `
+  <div class="boceto-section">
+    <img src="${boceto}" class="boceto-img" alt="Boceto del diseño" />
+    ${descripcion ? `<div class="boceto-desc"><div class="descripcion" style="margin-bottom:0">${descripcion}</div></div>` : ''}
+  </div>
+  ` : descripcion ? `<div class="descripcion">${descripcion}</div>` : ''}
   ` : ''}
 
   <div class="section-title">Detalle economico</div>

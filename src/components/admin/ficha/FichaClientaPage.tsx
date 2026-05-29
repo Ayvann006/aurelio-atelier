@@ -348,6 +348,7 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
           tipo_vestido: ficha.tipo_vestido,
           color_vestido: ficha.color_vestido,
           fecha_entrega: ficha.fecha_entrega,
+          boceto: ficha.presupuesto_boceto || '',
         }),
       })
       const json = await res.json()
