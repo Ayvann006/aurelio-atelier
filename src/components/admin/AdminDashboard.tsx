@@ -30,12 +30,11 @@ const ESTADO_CITA_COLORS: Record<string, string> = {
   'no-asistio': 'text-marfil/30 bg-marfil/5',
 }
 
-// ── Uncontrolled input - syncs on blur, never loses focus ──
+// ── Uncontrolled input — never loses focus ──
 function FormInput({ label, value, onChange, type = 'text', placeholder = '', className = 'input-dark', rows }: {
   label?: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; className?: string; rows?: number
 }) {
   const ref = useRef<any>(null)
-  // Sync from parent only when not focused
   useEffect(() => {
     if (ref.current && ref.current !== document.activeElement) {
       ref.current.value = value

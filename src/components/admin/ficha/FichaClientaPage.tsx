@@ -64,6 +64,46 @@ const MEDIDAS_FALDA = [
 
 const METODOS_PAGO = ['Efectivo', 'Transferencia', 'MercadoPago', 'Tarjeta crédito', 'Tarjeta débito', 'Otro']
 
+// ── Componentes externos (no se recrean en cada render) ──
+function Seccion({ id, titulo, icono: Icono, children, seccionAbierta, setSeccionAbierta }: {
+  id: string; titulo: string; icono: any; children: any; seccionAbierta: string; setSeccionAbierta: (v: string) => void
+}) {
+  const abierta = seccionAbierta === id
+  return (
+    <div className="border border-marfil/8 print:border-marfil/20">
+      <button onClick={() => setSeccionAbierta(abierta ? '' : id)}
+        className="w-full flex items-center justify-between px-6 py-4 bg-negro2 hover:bg-negro3 transition-colors print:hidden">
+        <div className="flex items-center gap-3">
+          <Icono size={15} className="text-dorado" strokeWidth={1.5} />
+          <span className="text-sm font-medium tracking-wider uppercase">{titulo}</span>
+        </div>
+        {abierta ? <ChevronUp size={14} className="text-marfil/30" /> : <ChevronDown size={14} className="text-marfil/30" />}
+      </button>
+      <div className={`${abierta ? 'block' : 'hidden'} print:block`}>
+        <div className="p-6">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+function CampoMedida({ campo, value, onChange }: {
+  campo: { key: string; label: string; flecha: string }; value: any; onChange: (key: string, val: string) => void
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${campo.flecha.replace('text-', 'bg-')}`} />
+      <span className="text-marfil/50 text-xs flex-1">{campo.label}</span>
+      <div className="flex items-center gap-1">
+        <input type="number" step="0.5" value={value || ''}
+          onChange={e => onChange(campo.key, e.target.value)}
+          className="w-16 bg-negro3 border border-marfil/10 text-marfil text-xs px-2 py-1.5 text-center focus:outline-none focus:border-dorado/40 print:border-marfil/30"
+          placeholder="—" />
+        <span className="text-marfil/25 text-xs">cm</span>
+      </div>
+    </div>
+  )
+}
+
 interface Props {
   clienteId: string
   token: string
@@ -317,6 +357,57 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
     } catch (e: any) { toast.error(e.message) }
   }
 
+  async function generarFacturaPDF() {
+    try {
+      toast.info('Generando estado de cuenta...')
+      const res = await fetch('/api/pdf/factura', {
+        method: 'POST',
+        headers: hdrs(),
+        body: JSON.stringify({
+          cliente_nombre: cliente?.nombre,
+          cliente_email: cliente?.email,
+          cliente_telefono: cliente?.telefono,
+          descripcion: prespDescripcion,
+          total: parseFloat(prespTotal) || 0,
+          moneda,
+          pagos: ficha.pagos || [],
+          total_pagado: totalPagado,
+          saldo_restante: saldoPendiente,
+          tipo_vestido: ficha.tipo_vestido,
+          color_vestido: ficha.color_vestido,
+          fecha_entrega: ficha.fecha_entrega,
+          numero: numFactura,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error)
+      const w = window.open('', '_blank')
+      if (w) { w.document.write(json.html); w.document.close(); setTimeout(() => w.print(), 500) }
+    } catch (e: any) { toast.error(e.message) }
+  }
+
+  async function generarMedidasPDF() {
+    try {
+      toast.info('Generando ficha de medidas...')
+      const medidas: any = {}
+      const todasLasMedidas = ['sobre_busto','busto','bajo_busto','escote','cintura','cadera_alta','cadera','cadera_baja','largo_corpino_lateral','largo_delantero','largo_total','hombros','sisa','largo_espalda','ancho_espalda','talle','brazo','largo_manga','biceps','codo','muneca','tiro','sobre_rodilla','largo_falda','altura','taco_zapato']
+      todasLasMedidas.forEach(k => { if (ficha[k]) medidas[k] = ficha[k] })
+      const res = await fetch('/api/pdf/medidas', {
+        method: 'POST',
+        headers: hdrs(),
+        body: JSON.stringify({
+          cliente_nombre: cliente?.nombre,
+          medidas,
+          notas_medidas: ficha.notas_medidas || '',
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error)
+      const w = window.open('', '_blank')
+      if (w) { w.document.write(json.html); w.document.close(); setTimeout(() => w.print(), 500) }
+    } catch (e: any) { toast.error(e.message) }
+  }
+
   function enviarPorWA() {
     if (!cliente) return
     const estado = ESTADOS_PROYECTO.find(e => e.key === ficha.estado_proyecto)?.label || ''
@@ -354,41 +445,6 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
       <p className="text-marfil/40">Clienta no encontrada</p>
     </div>
   )
-
-  function Seccion({ id, titulo, icono: Icono, children }: any) {
-    const abierta = seccionAbierta === id
-    return (
-      <div className="border border-marfil/8 print:border-marfil/20">
-        <button onClick={() => setSeccionAbierta(abierta ? '' : id)}
-          className="w-full flex items-center justify-between px-6 py-4 bg-negro2 hover:bg-negro3 transition-colors print:hidden">
-          <div className="flex items-center gap-3">
-            <Icono size={15} className="text-dorado" strokeWidth={1.5} />
-            <span className="text-sm font-medium tracking-wider uppercase">{titulo}</span>
-          </div>
-          {abierta ? <ChevronUp size={14} className="text-marfil/30" /> : <ChevronDown size={14} className="text-marfil/30" />}
-        </button>
-        <div className={`${abierta ? 'block' : 'hidden'} print:block`}>
-          <div className="p-6">{children}</div>
-        </div>
-      </div>
-    )
-  }
-
-  function CampoMedida({ campo }: { campo: { key: string; label: string; flecha: string } }) {
-    return (
-      <div className="flex items-center gap-3">
-        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${campo.flecha.replace('text-', 'bg-')}`} />
-        <span className="text-marfil/50 text-xs flex-1">{campo.label}</span>
-        <div className="flex items-center gap-1">
-          <input type="number" step="0.5" value={ficha[campo.key] || ''}
-            onChange={e => setMedida(campo.key, e.target.value)}
-            className="w-16 bg-negro3 border border-marfil/10 text-marfil text-xs px-2 py-1.5 text-center focus:outline-none focus:border-dorado/40 print:border-marfil/30"
-            placeholder="—" />
-          <span className="text-marfil/25 text-xs">cm</span>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen bg-negro">
@@ -484,7 +540,7 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
         </div>
 
         {/* MEDIDAS */}
-        <Seccion id="medidas" titulo="Medidas de la clienta" icono={Ruler}>
+        <Seccion seccionAbierta={seccionAbierta} setSeccionAbierta={setSeccionAbierta} id="medidas" titulo="Medidas de la clienta" icono={Ruler}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <p className="text-dorado text-xs tracking-widest uppercase mb-4">Vista Frontal & Largo</p>
@@ -505,12 +561,12 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
                   <ellipse cx="60" cy="395" rx="12" ry="5" /><ellipse cx="140" cy="395" rx="12" ry="5" />
                 </svg>
               </div>
-              <div className="space-y-2.5">{MEDIDAS_FRENTE.map(m => <CampoMedida key={m.key} campo={m} />)}</div>
+              <div className="space-y-2.5">{MEDIDAS_FRENTE.map(m => <CampoMedida key={m.key} campo={m} value={ficha[m.key]} onChange={setMedida} />)}</div>
             </div>
             <div className="space-y-6">
-              <div><p className="text-dorado text-xs tracking-widest uppercase mb-3">Espalda</p><div className="space-y-2.5">{MEDIDAS_ESPALDA.map(m => <CampoMedida key={m.key} campo={m} />)}</div></div>
-              <div><p className="text-dorado text-xs tracking-widest uppercase mb-3">Brazo</p><div className="space-y-2.5">{MEDIDAS_BRAZO.map(m => <CampoMedida key={m.key} campo={m} />)}</div></div>
-              <div><p className="text-dorado text-xs tracking-widest uppercase mb-3">Falda & Largo</p><div className="space-y-2.5">{MEDIDAS_FALDA.map(m => <CampoMedida key={m.key} campo={m} />)}</div></div>
+              <div><p className="text-dorado text-xs tracking-widest uppercase mb-3">Espalda</p><div className="space-y-2.5">{MEDIDAS_ESPALDA.map(m => <CampoMedida key={m.key} campo={m} value={ficha[m.key]} onChange={setMedida} />)}</div></div>
+              <div><p className="text-dorado text-xs tracking-widest uppercase mb-3">Brazo</p><div className="space-y-2.5">{MEDIDAS_BRAZO.map(m => <CampoMedida key={m.key} campo={m} value={ficha[m.key]} onChange={setMedida} />)}</div></div>
+              <div><p className="text-dorado text-xs tracking-widest uppercase mb-3">Falda & Largo</p><div className="space-y-2.5">{MEDIDAS_FALDA.map(m => <CampoMedida key={m.key} campo={m} value={ficha[m.key]} onChange={setMedida} />)}</div></div>
             </div>
           </div>
           <div className="mt-5 pt-5 border-t border-marfil/8">
@@ -518,12 +574,17 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
             <textarea value={ficha.notas_medidas || ''} onChange={e => setFicha((f:any)=>({...f,notas_medidas:e.target.value}))}
               className="input-dark w-full resize-none" rows={2} placeholder="Observaciones sobre las medidas, postura, particularidades..." />
           </div>
+          <div className="mt-4 pt-4 border-t border-marfil/8 flex justify-end">
+            <button onClick={generarMedidasPDF} className="btn-ghost flex items-center gap-2 py-2 px-4 text-xs">
+              <Printer size={12} /> Imprimir ficha de medidas
+            </button>
+          </div>
         </Seccion>
 
         {/* ═══════════════════════════════════ */}
         {/* PRESUPUESTO — SIMPLIFICADO */}
         {/* ═══════════════════════════════════ */}
-        <Seccion id="presupuesto" titulo="Presupuesto" icono={DollarSign}>
+        <Seccion seccionAbierta={seccionAbierta} setSeccionAbierta={setSeccionAbierta} id="presupuesto" titulo="Presupuesto" icono={DollarSign}>
           <div className="space-y-5">
             {/* Descripción + Boceto */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -590,7 +651,10 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
                   <MessageCircle size={12} /> Enviar al cliente
                 </button>
                 <button onClick={generarPDFPresupuesto} className="btn-ghost flex-1 justify-center py-2.5 text-xs flex items-center gap-2">
-                  <Download size={12} /> Exportar PDF
+                  <Download size={12} /> Descargar PDF
+                </button>
+                <button onClick={generarPDFPresupuesto} className="btn-ghost flex-1 justify-center py-2.5 text-xs flex items-center gap-2">
+                  <Printer size={12} /> Imprimir
                 </button>
               </div>
             )}
@@ -600,7 +664,7 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
         {/* ═══════════════════════════════════ */}
         {/* PAGOS / FACTURACIÓN */}
         {/* ═══════════════════════════════════ */}
-        <Seccion id="pagos" titulo="Pagos & Facturación" icono={Receipt}>
+        <Seccion seccionAbierta={seccionAbierta} setSeccionAbierta={setSeccionAbierta} id="pagos" titulo="Pagos & Facturación" icono={Receipt}>
           <div className="space-y-5">
 
             {/* Resumen financiero */}
@@ -622,7 +686,7 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
             </div>
 
             {/* Info factura */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-marfil/30 text-xs">
                   <Hash size={11} /> <span>Ref: {numFactura}</span>
@@ -631,9 +695,21 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
                   <CalendarDays size={11} /> <span>{new Date().toLocaleDateString('es-AR')}</span>
                 </div>
               </div>
-              <button onClick={() => setShowNuevoPago(true)} className="btn-gold flex items-center gap-1.5 py-2 px-4 text-xs">
-                <Plus size={12} /> Registrar pago
-              </button>
+              <div className="flex items-center gap-2">
+                {prespTotal && (ficha.pagos || []).length > 0 && (
+                  <button onClick={generarFacturaPDF} className="btn-ghost flex items-center gap-1.5 py-2 px-4 text-xs">
+                    <Download size={12} /> Descargar PDF
+                  </button>
+                )}
+                {prespTotal && (ficha.pagos || []).length > 0 && (
+                  <button onClick={generarFacturaPDF} className="btn-ghost flex items-center gap-1.5 py-2 px-4 text-xs">
+                    <Printer size={12} /> Imprimir
+                  </button>
+                )}
+                <button onClick={() => setShowNuevoPago(true)} className="btn-gold flex items-center gap-1.5 py-2 px-4 text-xs">
+                  <Plus size={12} /> Registrar pago
+                </button>
+              </div>
             </div>
 
             {/* Formulario nuevo pago */}
@@ -731,7 +807,7 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
         </Seccion>
 
         {/* NOTAS */}
-        <Seccion id="notas" titulo="Notas del proyecto" icono={FileText}>
+        <Seccion seccionAbierta={seccionAbierta} setSeccionAbierta={setSeccionAbierta} id="notas" titulo="Notas del proyecto" icono={FileText}>
           <div className="space-y-4">
             <div className="flex gap-3">
               <textarea value={notaNueva} onChange={e => setNotaNueva(e.target.value)}
@@ -763,7 +839,7 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
         </Seccion>
 
         {/* FOTOS Y BOCETOS */}
-        <Seccion id="fotos" titulo="Fotos, bocetos y referencias" icono={Camera}>
+        <Seccion seccionAbierta={seccionAbierta} setSeccionAbierta={setSeccionAbierta} id="fotos" titulo="Fotos, bocetos y referencias" icono={Camera}>
           {[
             { key: 'fotos_referencia', label: 'Fotos de referencia' },
             { key: 'bocetos', label: 'Bocetos del diseño' },
@@ -797,7 +873,7 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
         </Seccion>
 
         {/* TIMELINE */}
-        <Seccion id="timeline" titulo="Historial del proyecto" icono={Clock}>
+        <Seccion seccionAbierta={seccionAbierta} setSeccionAbierta={setSeccionAbierta} id="timeline" titulo="Historial del proyecto" icono={Clock}>
           <div className="relative">
             <div className="absolute left-3 top-0 bottom-0 w-px bg-marfil/8" />
             <div className="space-y-4">
