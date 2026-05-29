@@ -520,7 +520,7 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
               <label className="text-xs text-marfil/30 uppercase tracking-wider block mb-1.5">Tipo de vestido</label>
               <select value={ficha.tipo_vestido || ''} onChange={e => setFicha((f:any)=>({...f,tipo_vestido:e.target.value}))} className="select-dark w-full text-xs py-1.5">
                 <option value="">Seleccionar</option>
-                {['novia','15años','gala','reina','alta costura'].map(t=><option key={t} value={t} className="capitalize">{t}</option>)}
+                {['Novia','15 años','Gala','Miss','Alta Costura'].map(t=><option key={t} value={t} className="capitalize">{t}</option>)}
               </select>
             </div>
             <div>
