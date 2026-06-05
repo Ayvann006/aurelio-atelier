@@ -7,6 +7,11 @@ const checkoutSchema = z.object({
   cliente_nombre: z.string().min(2),
   cliente_email: z.string().email(),
   cliente_telefono: z.string().min(8),
+  provincia_envio: z.string().optional(),
+  ciudad_envio: z.string().optional(),
+  direccion_envio: z.string().optional(),
+  codigo_postal: z.string().optional(),
+  costo_envio: z.number().optional(),
   items: z.array(z.object({
     producto_id: z.string(),
     nombre: z.string(),
@@ -25,27 +30,23 @@ const checkoutSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    console.log('Checkout body:', JSON.stringify(body, null, 2))
-
     const data = checkoutSchema.parse(body)
     const supabase = createServiceClient()
 
-    // Verificar stock (si el producto no existe en Supabase, lo salteamos)
+    // Verificar stock
     for (const item of data.items) {
-      const { data: producto, error: stockError } = await supabase
+      const { data: producto } = await supabase
         .from('productos')
         .select('stock, nombre')
         .eq('id', item.producto_id)
         .single()
-
-      console.log(`Stock check ${item.nombre}:`, producto, stockError?.message)
 
       if (producto && producto.stock < item.cantidad) {
         return NextResponse.json({ error: `Stock insuficiente: ${item.nombre}` }, { status: 400 })
       }
     }
 
-    // Validar cupón si existe
+    // Validar cupón
     let descuento = data.descuento || 0
     if (data.cupon_codigo) {
       const { data: cupon } = await supabase
@@ -65,14 +66,18 @@ export async function POST(req: NextRequest) {
       if (cupon.descuento_fijo) descuento = cupon.descuento_fijo
     }
 
-    // Crear pedido en Supabase
-    console.log('Creando pedido en Supabase...')
+    // Crear pedido con datos de envío completos
     const { data: pedido, error: pedidoError } = await supabase
       .from('pedidos')
       .insert({
         cliente_nombre: data.cliente_nombre,
         cliente_email: data.cliente_email,
         cliente_telefono: data.cliente_telefono,
+        provincia_envio: data.provincia_envio || null,
+        ciudad_envio: data.ciudad_envio || null,
+        direccion_envio: data.direccion_envio || null,
+        codigo_postal: data.codigo_postal || null,
+        costo_envio: data.costo_envio || 0,
         items: data.items,
         subtotal: data.subtotal,
         descuento,
@@ -84,15 +89,9 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (pedidoError) {
-      console.error('Error Supabase al crear pedido:', pedidoError)
-      throw new Error(`Error en base de datos: ${pedidoError.message}`)
-    }
-
-    console.log('Pedido creado:', pedido.id, pedido.numero)
+    if (pedidoError) throw new Error(`Error en base de datos: ${pedidoError.message}`)
 
     // Crear preferencia MercadoPago
-    console.log('Creando preferencia MercadoPago...')
     const preferencia = await crearPreferenciaPedido({
       id: pedido.id,
       numero: pedido.numero,
@@ -104,8 +103,6 @@ export async function POST(req: NextRequest) {
       total: pedido.total,
       cliente: { nombre: data.cliente_nombre, email: data.cliente_email },
     })
-
-    console.log('Preferencia MP creada:', preferencia.id)
 
     await supabase
       .from('pedidos')

@@ -15,9 +15,10 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-  const { id, estado } = await req.json()
+  const body = await req.json()
+  const { id, ...updates } = body
   const supabase = createServiceClient()
-  const { data } = await supabase.from('pedidos').update({ estado }).eq('id', id).select().single()
+  const { data } = await supabase.from('pedidos').update(updates).eq('id', id).select().single()
   return NextResponse.json(data)
 }
 

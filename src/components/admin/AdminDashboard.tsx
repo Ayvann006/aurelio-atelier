@@ -5,7 +5,7 @@ import {
   Calendar, ShoppingBag, Package, Clock, LogOut, Plus, Trash2,
   CheckCircle, XCircle, RefreshCw, BarChart3, Upload, X, MapPin,
   TrendingUp, Images, Users, Search, Star, Filter, Download,
-  Tag, Loader2, Bell, ChevronDown, Settings
+  Tag, Loader2, Bell, ChevronDown, Settings, Printer
 } from 'lucide-react'
 import { formatPrecio, formatHora } from '@/lib/utils'
 import CalendarioCitas from './CalendarioCitas'
@@ -530,14 +530,41 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <div className="flex items-center gap-3 mb-1 flex-wrap">
                           <span className="text-dorado text-xs tracking-wider">{p.numero}</span>
                           <span className={`text-xs px-2 py-0.5 ${ESTADO_PEDIDO_COLORS[p.estado]}`}>{p.estado}</span>
+                          {(p as any).mp_payment_id && <span className="text-marfil/20 text-xs">MP #{(p as any).mp_payment_id}</span>}
                         </div>
                         <p className="font-medium text-sm">{p.cliente_nombre}</p>
-                        <p className="text-marfil/40 text-xs">{p.cliente_email}</p>
-                        {(p as any).provincia_envio && <p className="text-marfil/30 text-xs flex items-center gap-1 mt-0.5"><MapPin size={9} />{(p as any).provincia_envio}</p>}
-                        <div className="mt-1.5 space-y-0.5">{(p.items as any[]).map((item: any, i: number) => <p key={i} className="text-marfil/40 text-xs">{item.cantidad}x {item.nombre}</p>)}</div>
+                        <p className="text-marfil/40 text-xs">{p.cliente_email} · {(p as any).cliente_telefono || ''}</p>
+                        
+                        {/* Dirección de envío */}
+                        {(p as any).direccion_envio && (
+                          <div className="mt-2 bg-negro3 border border-marfil/5 p-2.5">
+                            <p className="text-xs text-marfil/30 uppercase tracking-wider mb-1 flex items-center gap-1"><MapPin size={9} /> Envío</p>
+                            <p className="text-sm">{(p as any).direccion_envio}</p>
+                            <p className="text-marfil/50 text-xs">{(p as any).ciudad_envio}{(p as any).provincia_envio ? `, ${(p as any).provincia_envio}` : ''}{(p as any).codigo_postal ? ` · CP ${(p as any).codigo_postal}` : ''}</p>
+                          </div>
+                        )}
+                        {!(p as any).direccion_envio && (p as any).provincia_envio && (
+                          <p className="text-marfil/30 text-xs flex items-center gap-1 mt-0.5"><MapPin size={9} />{(p as any).provincia_envio}</p>
+                        )}
+
+                        {/* Productos */}
+                        <div className="mt-2 space-y-0.5">{(p.items as any[]).map((item: any, i: number) => (
+                          <p key={i} className="text-marfil/40 text-xs">{item.cantidad}x {item.nombre}{item.variante ? ` (${item.variante})` : ''}</p>
+                        ))}</div>
+
+                        {/* MercadoPago details */}
+                        {(p as any).mp_payment_id && (
+                          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                            {(p as any).mp_payment_method && <span className="text-marfil/25 text-xs">Método: {(p as any).mp_payment_method}</span>}
+                            {(p as any).mp_status && <span className="text-marfil/25 text-xs">Status: {(p as any).mp_status}</span>}
+                            {(p as any).mp_net_received && <span className="text-marfil/25 text-xs">Neto: {formatPrecio((p as any).mp_net_received)}</span>}
+                            {(p as any).mp_fee_amount && <span className="text-marfil/25 text-xs">Comisión: {formatPrecio((p as any).mp_fee_amount)}</span>}
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="font-cormorant text-xl">{formatPrecio(p.total)}</p>
+                        {(p as any).costo_envio > 0 && <p className="text-marfil/30 text-xs">Envío: {formatPrecio((p as any).costo_envio)}</p>}
                         <p className="text-marfil/30 text-xs">{new Date(p.created_at).toLocaleDateString('es-AR')}</p>
                       </div>
                     </div>
@@ -560,6 +587,22 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               </div>
                             )
                           })}
+                          {/* Ticket de envío */}
+                          <button onClick={async () => {
+                            try {
+                              const res = await fetch('/api/pdf/ticket', { method: 'POST', headers: authHeaders(), body: JSON.stringify({
+                                numero: p.numero, cliente_nombre: p.cliente_nombre, cliente_telefono: (p as any).cliente_telefono,
+                                cliente_email: p.cliente_email, direccion_envio: (p as any).direccion_envio, ciudad_envio: (p as any).ciudad_envio,
+                                provincia_envio: (p as any).provincia_envio, codigo_postal: (p as any).codigo_postal,
+                                items: p.items, notas: (p as any).notas,
+                              })})
+                              const json = await res.json()
+                              const w = window.open('', '_blank')
+                              if (w) { w.document.write(json.html); w.document.close(); setTimeout(() => w.print(), 500) }
+                            } catch (e: any) { toast.error(e.message) }
+                          }} className="ml-2 text-xs px-2.5 py-1.5 border border-marfil/10 text-marfil/30 hover:border-dorado/30 hover:text-dorado transition-all flex items-center gap-1">
+                            <Printer size={10} /> Ticket
+                          </button>
                           <button onClick={() => cancelarPedido(p.id)} className="ml-auto text-xs px-2.5 py-1.5 border border-red-400/20 text-red-400/50 hover:bg-red-400/10 transition-all flex items-center gap-1"><XCircle size={10} /> Cancelar</button>
                         </div>
                       </div>
