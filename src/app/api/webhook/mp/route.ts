@@ -33,7 +33,6 @@ export async function POST(req: NextRequest) {
           mp_payer_email: pago.payer?.email || null,
         }).eq('id', ref)
 
-        // Descontar stock
         if (pago.status === 'approved') {
           const { data: pedido } = await supabase.from('pedidos').select('items').eq('id', ref).single()
           if (pedido?.items) {
@@ -45,3 +44,11 @@ export async function POST(req: NextRequest) {
             }
           }
         }
+      }
+    }
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    console.error('Webhook error:', error)
+    return NextResponse.json({ error: 'Error' }, { status: 500 })
+  }
+}
