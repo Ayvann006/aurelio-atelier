@@ -38,31 +38,10 @@ export async function POST(req: NextRequest) {
           const { data: pedido } = await supabase.from('pedidos').select('items').eq('id', ref).single()
           if (pedido?.items) {
             for (const item of pedido.items as any[]) {
-              await supabase.rpc('decrementar_stock', { 
-                producto_id: item.producto_id, 
-                cantidad: item.cantidad 
-              }).catch(() => {
-                // If RPC doesn't exist, do manual update
-                supabase.from('productos')
-                  .select('stock')
-                  .eq('id', item.producto_id)
-                  .single()
-                  .then(({ data: prod }) => {
-                    if (prod) {
-                      supabase.from('productos')
-                        .update({ stock: Math.max(0, prod.stock - item.cantidad) })
-                        .eq('id', item.producto_id)
-                    }
-                  })
-              })
+              const { data: prod } = await supabase.from('productos').select('stock').eq('id', item.producto_id).single()
+              if (prod) {
+                await supabase.from('productos').update({ stock: Math.max(0, prod.stock - item.cantidad) }).eq('id', item.producto_id)
+              }
             }
           }
         }
-      }
-    }
-    return NextResponse.json({ ok: true })
-  } catch (error) {
-    console.error('Webhook error:', error)
-    return NextResponse.json({ error: 'Error' }, { status: 500 })
-  }
-}
