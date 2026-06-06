@@ -19,14 +19,23 @@ export default async function TiendaPage() {
       <Nav />
       <main className="min-h-screen pt-28 pb-20 px-6 md:px-14">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-12">
-            <span className="section-label">Tienda Selecta</span>
-            <h1 className="font-cormorant text-4xl md:text-5xl font-light italic mb-3">
-              Accesorios de Atelier
-            </h1>
-            <div className="gold-line mb-4" />
-            <p className="text-marfil/40 text-sm">Piezas únicas para complementar tu look</p>
+
+          {/* Hero */}
+          <div className="mb-10 md:mb-14">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+              <div>
+                <span className="text-dorado/50 tracking-[0.25em] uppercase text-xs">Tienda Exclusiva</span>
+                <h1 className="font-cormorant text-4xl md:text-5xl font-light italic mt-2 leading-tight">
+                  Accesorios de Atelier
+                </h1>
+                <div className="w-10 h-px bg-dorado/40 mt-4" />
+              </div>
+              <p className="text-marfil/35 text-sm max-w-md leading-relaxed">
+                Piezas únicas, confeccionadas artesanalmente con los más finos materiales. Cada accesorio es una obra de arte diseñada para complementar tu look.
+              </p>
+            </div>
           </div>
+
           <CatalogoProductos productos={productos || []} />
         </div>
       </main>
