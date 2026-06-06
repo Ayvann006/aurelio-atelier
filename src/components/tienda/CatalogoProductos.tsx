@@ -17,7 +17,7 @@ export default function CatalogoProductos({ productos, categorias: catsProp }: P
 
   // Build categories dynamically from products
   const categoriasUnicas = useMemo(() => {
-    const cats = catsProp || [...new Set(productos.map(p => p.categoria).filter(Boolean))]
+    const cats = catsProp || Array.from(new Set(productos.map(p => p.categoria).filter(Boolean)))
     return [{ value: 'todos', label: 'Todos', count: productos.length }, ...cats.map(c => ({
       value: c,
       label: c.charAt(0).toUpperCase() + c.slice(1),
