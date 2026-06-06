@@ -9,7 +9,7 @@ type Vista = 'mes' | 'semana' | 'dia'
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 const DIAS_CORTO = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
-const HORAS_DIA = ['10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00']
+const HORAS_DIA = ['11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00']
 
 const COLORES_EVENTO: Record<string, string> = {
   novia: 'bg-pink-500/20 border-pink-500/40 text-pink-300',

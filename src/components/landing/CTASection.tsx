@@ -14,7 +14,7 @@ export default function CTASection() {
           Tu momento<br />más especial<br /><em>comienza aquí</em>
         </h2>
         <p className="text-marfil/40 text-sm tracking-wider mb-10">
-          Lunes a Sábados 10:00 — 19:00 hs
+          Lunes a Viernes 11:00 — 19:00 hs / Sábados 11:00 — 16:00 hs
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/citas" className="btn-gold-fill px-12 py-4 text-xs">

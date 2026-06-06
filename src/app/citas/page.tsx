@@ -38,7 +38,10 @@ export default function CitasPage() {
             </h1>
             <div className="gold-line mx-auto mb-4" />
             <p className="text-marfil/50 text-sm tracking-wide">
-              El Salvador 5930, Palermo Hollywood — Lunes a Sábados 10:00 a 19:00 hs
+              Lunes a Viernes 11:00 a 19:00 hs / Sábados 11:00 a 16:00 hs
+           </p>
+            <p className="text-marfil/50 text-sm tracking-wide">
+                El Salvador 5930, Palermo Hollywood, CABA
             </p>
           </div>
 

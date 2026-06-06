@@ -39,7 +39,7 @@ export default function Footer() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Clock size={13} className="text-dorado flex-shrink-0" strokeWidth={1.5} />
-                  <p className="text-marfil/50 text-sm">Lunes a Sábados · 10:00 — 19:00 hs</p>
+                  <p className="text-marfil/50 text-sm">Lunes a Viernes · 11:00 — 19:00 hs / Sábados · 11:00 — 16:00 hs</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <Instagram size={13} className="text-dorado flex-shrink-0" strokeWidth={1.5} />
