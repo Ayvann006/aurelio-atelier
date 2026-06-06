@@ -5,7 +5,7 @@ import {
   Calendar, ShoppingBag, Package, Clock, LogOut, Plus, Trash2,
   CheckCircle, XCircle, RefreshCw, BarChart3, Upload, X, MapPin,
   TrendingUp, Images, Users, Search, Star, Filter, Download,
-  Tag, Loader2, Bell, ChevronDown, Settings, Printer
+  Tag, Loader2, Bell, ChevronDown, Settings, Printer, Menu, ArrowUpRight, Activity
 } from 'lucide-react'
 import { formatPrecio, formatHora } from '@/lib/utils'
 import CalendarioCitas from './CalendarioCitas'
@@ -355,40 +355,86 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     return matchSearch && matchFiltro
   })
 
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Notification badges
+  const pedidosPendientes = pedidos.filter(p => p.estado === 'pendiente' && !(p as any).oculto).length
+  const citasConfirmadas = citas.filter(c => c.estado === 'confirmada').length
+
   const TABS = [
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-    { id: 'citas', label: 'Citas', icon: Calendar },
-    { id: 'pedidos', label: 'Pedidos', icon: ShoppingBag },
-    { id: 'productos', label: 'Productos', icon: Package },
-    { id: 'colecciones', label: 'Galerías', icon: Images },
-    { id: 'clientes', label: 'Clientas', icon: Users },
-    { id: 'horarios', label: 'Horarios', icon: Clock },
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3, badge: 0 },
+    { id: 'citas', label: 'Citas', icon: Calendar, badge: citasConfirmadas },
+    { id: 'pedidos', label: 'Pedidos', icon: ShoppingBag, badge: pedidosPendientes },
+    { id: 'productos', label: 'Productos', icon: Package, badge: 0 },
+    { id: 'colecciones', label: 'Galerías', icon: Images, badge: 0 },
+    { id: 'clientes', label: 'Clientas', icon: Users, badge: 0 },
+    { id: 'horarios', label: 'Horarios', icon: Clock, badge: 0 },
   ]
 
   return (
     <div className="min-h-screen bg-negro flex">
-      <aside className="w-56 bg-negro2 border-r border-marfil/5 flex flex-col flex-shrink-0">
+      {/* Mobile header */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-negro2 border-b border-marfil/8 px-4 py-3 flex items-center justify-between md:hidden">
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-marfil/50 hover:text-dorado transition-colors">
+          <Menu size={20} />
+        </button>
+        <p className="font-cormorant text-sm tracking-widest uppercase text-marfil/80">Aurelio Martínez</p>
+        <div className="flex items-center gap-2">
+          {pedidosPendientes > 0 && (
+            <button onClick={() => { setTab('pedidos'); setSidebarOpen(false) }} className="relative">
+              <ShoppingBag size={16} className="text-marfil/40" />
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-dorado text-negro flex items-center justify-center rounded-full" style={{fontSize:'9px'}}>{pedidosPendientes}</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {sidebarOpen && <div className="fixed inset-0 z-40 bg-negro/80 md:hidden" onClick={() => setSidebarOpen(false)} />}
+
+      <aside className={`fixed md:static inset-y-0 left-0 z-40 w-60 bg-negro2 border-r border-marfil/5 flex flex-col flex-shrink-0 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="p-5 border-b border-marfil/5">
           <p className="font-cormorant text-sm tracking-widest uppercase text-marfil/80">Aurelio Martínez</p>
           <p className="text-dorado text-xs tracking-wider mt-0.5">Panel Admin</p>
+          <div className="flex gap-3 mt-3 pt-3 border-t border-marfil/5">
+            <div className="flex-1 text-center">
+              <p className="font-cormorant text-lg text-dorado">{citasHoy}</p>
+              <p className="text-marfil/25" style={{fontSize:'9px'}}>Citas hoy</p>
+            </div>
+            <div className="w-px bg-marfil/5" />
+            <div className="flex-1 text-center">
+              <p className="font-cormorant text-lg text-dorado">{pedidosPendientes}</p>
+              <p className="text-marfil/25" style={{fontSize:'9px'}}>Pendientes</p>
+            </div>
+            <div className="w-px bg-marfil/5" />
+            <div className="flex-1 text-center">
+              <p className="font-cormorant text-lg text-dorado">{clientes.length}</p>
+              <p className="text-marfil/25" style={{fontSize:'9px'}}>Clientas</p>
+            </div>
+          </div>
         </div>
-        <nav className="flex-1 p-3 space-y-0.5">
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setTab(id as Tab)}
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+          {TABS.map(({ id, label, icon: Icon, badge }) => (
+            <button key={id} onClick={() => { setTab(id as Tab); setSidebarOpen(false) }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-all text-left rounded-sm ${tab === id ? 'bg-dorado/10 text-dorado border-l-2 border-dorado -ml-px pl-[11px]' : 'text-marfil/40 hover:text-marfil/70 hover:bg-marfil/3'}`}>
-              <Icon size={14} strokeWidth={1.5} />{label}
+              <Icon size={14} strokeWidth={1.5} />
+              <span className="flex-1">{label}</span>
+              {badge > 0 && <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-dorado/20 text-dorado rounded-full" style={{fontSize:'10px'}}>{badge}</span>}
             </button>
           ))}
         </nav>
-        <div className="p-3 border-t border-marfil/5">
+        <div className="p-3 border-t border-marfil/5 space-y-1">
+          <a href="https://aurelio-atelier.vercel.app" target="_blank" rel="noopener noreferrer"
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-marfil/25 hover:text-dorado transition-colors">
+            <ArrowUpRight size={12} /> Ver sitio web
+          </a>
           <button onClick={onLogout} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-marfil/25 hover:text-marfil/50 transition-colors">
             <LogOut size={14} strokeWidth={1.5} /> Cerrar sesión
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
-        <div className="p-6">
+      <main className="flex-1 overflow-auto md:h-screen">
+        <div className="p-4 md:p-6 pt-16 md:pt-6">
 
           {tab === 'dashboard' && (
             <div>
