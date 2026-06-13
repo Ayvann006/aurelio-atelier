@@ -82,9 +82,7 @@ export default function Footer() {
           <div className="border-t border-marfil/8 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-marfil/30 text-xs tracking-wider">© 2025 Aurelio Martínez Atelier — Todos los derechos reservados</p>
             <div className="flex gap-6">
-              <a href="https://instagram.com/aureliomartinezmoda" target="_blank" rel="noopener noreferrer" className="text-marfil/30 text-xs tracking-widest uppercase hover:text-dorado transition-colors">Instagram</a>
-              <a href="https://wa.me/5491136205098" className="text-marfil/30 text-xs tracking-widest uppercase hover:text-dorado transition-colors">WhatsApp</a>
-              <a href="https://g.page/r/aurelio-martinez" target="_blank" rel="noopener noreferrer" className="text-marfil/30 text-xs tracking-widest uppercase hover:text-dorado transition-colors">Google</a>
+              <a href="https://instagram.com/vivan_designer" target="_blank" rel="noopener noreferrer" className="text-marfil/30 text-xs tracking-widest uppercase hover:text-dorado transition-colors">Diseñado por IV STUDIO</a>
             </div>
           </div>
         </div>
