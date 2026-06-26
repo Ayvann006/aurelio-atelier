@@ -27,7 +27,7 @@ const TIPOS_VESTIDO = [
   { value: 'novia', label: 'Novia' },
   { value: 'quinceanera', label: 'Quinceañera' },
   { value: 'gala', label: 'Gala' },
-  { value: 'reina', label: 'Reina / Certamen' },
+  { value: 'miss', label: 'Miss / Certamen' },
   { value: 'alta-costura', label: 'Alta Costura' },
   { value: 'otro', label: 'Otro' },
 ]

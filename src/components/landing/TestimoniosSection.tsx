@@ -51,7 +51,7 @@ export default function TestimoniosSection() {
         {/* Link a Google Reviews */}
         <div className="text-center mt-8">
           <a
-            href="https://g.page/r/aurelio-martinez/review"
+            href="https://share.google/a16Plkwt8u7vkIYQ0"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-ghost inline-flex items-center gap-2 text-xs"

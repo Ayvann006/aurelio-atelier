@@ -120,10 +120,10 @@ export default function FormularioCita({ fecha, hora, onVolver, onConfirmar }: P
           <input type="checkbox" {...register('pagar_sena')} className="mt-0.5 accent-dorado w-4 h-4" />
           <div>
             <p className="text-sm font-medium flex items-center gap-2">
-              <CreditCard size={14} className="text-dorado" /> Abonar seña de $5.000 por MercadoPago
+              <CreditCard size={14} className="text-dorado" /> Abonar seña de $10.000 por MercadoPago
             </p>
             <p className="text-marfil/40 text-xs mt-1 leading-relaxed">
-              Opcional pero recomendado — asegura tu turno. Se descuenta del total del trabajo.
+              Asegura tu turno. Se descuenta del total del trabajo.
             </p>
           </div>
         </label>

@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         ...datosCita,
         estado: 'confirmada',
         sena_pagada: false,
-        monto_sena: 5000,
+        monto_sena: 10000,
         ...(clienteId ? { cliente_id: clienteId } : {}),
       })
       .select()
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
           cliente: { nombre: data.cliente_nombre, email: data.cliente_email },
           fecha: data.fecha,
           hora: data.hora,
-          monto: 5000,
+          monto: 10000,
         })
         mp_url = preferencia.init_point
         await supabase.from('citas').update({ mp_preference_id: preferencia.id }).eq('id', cita.id)
