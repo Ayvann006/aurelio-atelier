@@ -1,16 +1,15 @@
 import { Instagram } from 'lucide-react'
+import { getConfiguracionSitio } from '@/lib/supabase'
 
-// Placeholder de posts de Instagram — reemplazar con embed real o API de Instagram
-const POSTS = [
-  { id: '1', img: '/images/hero.jpg', url: 'https://instagram.com/aureliomartinezmoda' },
-  { id: '2', img: '/images/cat-miss.jpg', url: 'https://instagram.com/aureliomartinezmoda' },
-  { id: '3', img: '/images/cat-quinces.jpg', url: 'https://instagram.com/aureliomartinezmoda' },
-  { id: '4', img: '/images/cat-gala.jpg', url: 'https://instagram.com/aureliomartinezmoda' },
-  { id: '5', img: '/images/cat-novias.jpg', url: 'https://instagram.com/aureliomartinezmoda' },
-  { id: '6', img: '/images/cta-bg.jpg', url: 'https://instagram.com/aureliomartinezmoda' },
-]
+// Fallback si todavía no se cargaron fotos de Instagram desde el Admin
+const FALLBACKS = ['/images/hero.jpg', '/images/cat-miss.jpg', '/images/cat-quinces.jpg', '/images/cat-gala.jpg', '/images/cat-novias.jpg', '/images/cta-bg.jpg']
+const IG_URL = 'https://instagram.com/aureliomartinezmoda'
 
-export default function InstagramSection() {
+export default async function InstagramSection() {
+  const config = await getConfiguracionSitio()
+  const guardadas: string[] = Array.isArray(config?.instagram_imagenes) ? config.instagram_imagenes : []
+  const posts = FALLBACKS.map((fallback, i) => ({ id: String(i + 1), img: guardadas[i] || fallback }))
+
   return (
     <section className="py-20 px-6 md:px-14 bg-negro">
       <div className="max-w-7xl mx-auto">
@@ -20,7 +19,7 @@ export default function InstagramSection() {
             <h2 className="font-cormorant text-3xl font-light italic">@aureliomartinezmoda</h2>
           </div>
           <a
-            href="https://instagram.com/aureliomartinezmoda"
+            href={IG_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-gold flex items-center gap-2 text-xs py-2.5 px-5"
@@ -31,10 +30,10 @@ export default function InstagramSection() {
         </div>
 
         <div className="grid grid-cols-3 md:grid-cols-6 gap-px">
-          {POSTS.map(post => (
+          {posts.map(post => (
             <a
               key={post.id}
-              href={post.url}
+              href={IG_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="relative overflow-hidden group aspect-square"

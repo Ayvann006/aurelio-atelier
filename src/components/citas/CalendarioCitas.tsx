@@ -18,6 +18,7 @@ export default function CalendarioCitas({ onSeleccionar }: Props) {
   const [horaSel, setHoraSel] = useState<string | null>(null)
   const [horarios, setHorarios] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [diasBloqueados, setDiasBloqueados] = useState<Set<string>>(new Set())
 
   const primerDia = new Date(anio, mes, 1).getDay()
   const diasEnMes = new Date(anio, mes + 1, 0).getDate()
@@ -31,8 +32,18 @@ export default function CalendarioCitas({ onSeleccionar }: Props) {
     const dow = d.getDay()
     if (dow === 0) return false // domingo
     if (d < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())) return false
+    if (diasBloqueados.has(dateStr(dia))) return false // bloqueado desde el admin
     return true
   }
+
+  // Días bloqueados por completo desde el admin (se cargan una vez y se usan para
+  // marcar el día como no disponible directamente en el calendario)
+  useEffect(() => {
+    fetch('/api/dias-bloqueados')
+      .then((r) => r.json())
+      .then((d) => setDiasBloqueados(new Set<string>(d.fechas || [])))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!fechaSel) return

@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase'
 import { crearPreferenciaCita } from '@/lib/mercadopago'
 import { generarMensajeWA, generarEmailCita } from '@/lib/notificaciones'
 import { z } from 'zod'
+import { getHorariosDisponibles } from '@/lib/utils'
 
 const citaSchema = z.object({
   cliente_nombre: z.string().min(2),
@@ -22,7 +23,33 @@ export async function POST(req: NextRequest) {
     const data = citaSchema.parse(body)
     const supabase = createServiceClient()
 
-    // Verificar disponibilidad
+    // Verificar que la fecha/hora esté dentro del horario de atención
+    const horariosDelDia = getHorariosDisponibles(data.fecha)
+    if (!horariosDelDia.includes(data.hora)) {
+      return NextResponse.json({ error: 'Ese horario está fuera del horario de atención' }, { status: 409 })
+    }
+
+    // Verificar que el día/horario no esté bloqueado desde el admin
+    const { data: bloqueosDelDia } = await supabase
+      .from('horarios_bloqueados')
+      .select('todo_el_dia, hora_inicio, hora_fin')
+      .eq('fecha', data.fecha)
+
+    const diaBloqueado = bloqueosDelDia?.some((b) => b.todo_el_dia)
+    if (diaBloqueado) {
+      return NextResponse.json({ error: 'Ese día no está disponible para agendar' }, { status: 409 })
+    }
+    const horaBloqueada = bloqueosDelDia?.some((b) => {
+      if (b.todo_el_dia) return false
+      const hInicio = b.hora_inicio?.substring(0, 5)
+      const hFin = b.hora_fin?.substring(0, 5)
+      return hInicio && hFin && data.hora >= hInicio && data.hora < hFin
+    })
+    if (horaBloqueada) {
+      return NextResponse.json({ error: 'Ese horario no está disponible' }, { status: 409 })
+    }
+
+    // Verificar disponibilidad (que no haya otra cita en ese horario)
     const { data: existente } = await supabase
       .from('citas')
       .select('id')

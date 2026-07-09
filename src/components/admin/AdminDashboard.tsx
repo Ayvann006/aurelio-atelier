@@ -5,14 +5,14 @@ import {
   Calendar, ShoppingBag, Package, Clock, LogOut, Plus, Trash2,
   CheckCircle, XCircle, RefreshCw, BarChart3, Upload, X, MapPin,
   TrendingUp, Images, Users, Search, Star, Filter, Download,
-  Tag, Loader2, Bell, ChevronDown, Settings, Printer, Menu, ArrowUpRight, Activity
+  Tag, Loader2, Bell, ChevronDown, Settings, Printer, Menu, ArrowUpRight, Activity, Power
 } from 'lucide-react'
 import { formatPrecio, formatHora } from '@/lib/utils'
 import CalendarioCitas from './CalendarioCitas'
 import { toast } from 'sonner'
 import type { Cita, Pedido, Producto } from '@/types'
 
-type Tab = 'dashboard' | 'citas' | 'pedidos' | 'productos' | 'colecciones' | 'clientes' | 'horarios'
+type Tab = 'dashboard' | 'citas' | 'pedidos' | 'productos' | 'colecciones' | 'clientes' | 'horarios' | 'sitio'
 
 const ESTADO_PEDIDO_COLORS: Record<string, string> = {
   pendiente: 'text-yellow-400/70 bg-yellow-400/10',
@@ -65,6 +65,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [colecciones, setColecciones] = useState<any[]>([])
   const [clientes, setClientes] = useState<any[]>([])
   const [horarios, setHorarios] = useState<any[]>([])
+  const [configSitio, setConfigSitio] = useState<any>({})
+  const [subiendoImgSitio, setSubiendoImgSitio] = useState<string | null>(null)
   const [categorias, setCategorias] = useState<any[]>([])
   const [cargando, setCargando] = useState(false)
 
@@ -92,7 +94,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const fileInputColRef = useRef<HTMLInputElement>(null)
 
   const [showNuevoHorario, setShowNuevoHorario] = useState(false)
-  const [nuevoHorario, setNuevoHorario] = useState({ fecha: '', fecha_fin: '', todo_el_dia: true, hora_inicio: '10:00', hora_fin_hora: '19:00', motivo: '' })
+  const [nuevoHorario, setNuevoHorario] = useState({ fecha: '', fecha_fin: '', todo_el_dia: true, hora_inicio: '11:00', hora_fin_hora: '18:00', motivo: '' })
   const [bloqueoPorRango, setBloqueoPorRango] = useState(false)
 
   const [showNuevoCliente, setShowNuevoCliente] = useState(false)
@@ -112,13 +114,14 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       if (tipo === 'colecciones') setColecciones(data ?? [])
       if (tipo === 'clientes') setClientes(data ?? [])
       if (tipo === 'horarios') setHorarios(data ?? [])
+      if (tipo === 'configuracion') setConfigSitio(data ?? {})
       if (tipo === 'categorias') setCategorias(data ?? [])
     } finally { setCargando(false) }
   }
 
   useEffect(() => {
     cargar('citas'); cargar('pedidos'); cargar('productos')
-    cargar('colecciones'); cargar('clientes'); cargar('horarios'); cargar('categorias')
+    cargar('colecciones'); cargar('clientes'); cargar('horarios'); cargar('categorias'); cargar('configuracion')
   }, [])
 
   function exportCSV(tipo: 'clientes' | 'pedidos') {
@@ -184,10 +187,20 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     } else { const err = await res.json(); toast.error(err.error || 'Error') }
   }
 
+  async function toggleActivoProducto(id: string, activo: boolean) {
+    if (!confirm(activo ? '¿Activar este producto? Volverá a verse en la tienda.' : '¿Desactivar este producto? Dejará de verse en la tienda, pero conservás toda su info para reactivarlo cuando quieras.')) return
+    const res = await fetch('/api/admin/productos', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ id, activo }) })
+    if (!res.ok) { const err = await res.json().catch(() => ({})); toast.error(err.error || 'No se pudo actualizar el producto'); return }
+    setProductos(ps => ps.map(p => p.id === id ? { ...p, activo } : p))
+    toast.success(activo ? 'Producto activado' : 'Producto desactivado')
+  }
+
   async function eliminarProducto(id: string) {
-    if (!confirm('¿Eliminar este producto?')) return
-    await fetch('/api/admin/productos', { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) })
-    setProductos(ps => ps.filter(p => p.id !== id)); toast.success('Producto eliminado')
+    if (!confirm('¿Eliminar este producto definitivamente? Esta acción no se puede deshacer y se pierde toda su info. Si solo querés ocultarlo, usá "Desactivar" en su lugar.')) return
+    const res = await fetch('/api/admin/productos', { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) })
+    if (!res.ok) { const err = await res.json().catch(() => ({})); toast.error(err.error || 'No se pudo eliminar el producto'); return }
+    setProductos(ps => ps.filter(p => p.id !== id))
+    toast.success('Producto eliminado')
   }
 
   async function toggleDestacado(id: string, destacado: boolean) {
@@ -233,6 +246,42 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       if (res.ok && json.url) { setNuevaColeccion(c => ({ ...c, imagen_principal: json.url })); toast.success('Foto subida') }
       else toast.error(json.error || 'Error al subir')
       setSubiendoFotoCol(false)
+    }
+  }
+
+  async function subirImagenSitio(campo: string, file: File) {
+    setSubiendoImgSitio(campo)
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = async () => {
+      const res = await fetch('/api/admin/upload', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ base64: reader.result, nombre: file.name }) })
+      const json = await res.json()
+      if (res.ok && json.url) {
+        const patchRes = await fetch('/api/admin/configuracion', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [campo]: json.url }) })
+        if (patchRes.ok) { const data = await patchRes.json(); setConfigSitio(data); toast.success('Imagen actualizada') }
+        else toast.error('No se pudo guardar la imagen')
+      } else toast.error(json.error || 'Error al subir')
+      setSubiendoImgSitio(null)
+    }
+  }
+
+  async function subirImagenInstagram(idx: number, file: File) {
+    const campo = `instagram-${idx}`
+    setSubiendoImgSitio(campo)
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = async () => {
+      const res = await fetch('/api/admin/upload', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ base64: reader.result, nombre: file.name }) })
+      const json = await res.json()
+      if (res.ok && json.url) {
+        const actuales: string[] = Array.isArray(configSitio.instagram_imagenes) ? [...configSitio.instagram_imagenes] : []
+        while (actuales.length < 6) actuales.push('')
+        actuales[idx] = json.url
+        const patchRes = await fetch('/api/admin/configuracion', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ instagram_imagenes: actuales }) })
+        if (patchRes.ok) { const data = await patchRes.json(); setConfigSitio(data); toast.success('Imagen actualizada') }
+        else toast.error('No se pudo guardar la imagen')
+      } else toast.error(json.error || 'Error al subir')
+      setSubiendoImgSitio(null)
     }
   }
 
@@ -286,16 +335,26 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     } else {
       bloques.push({ fecha: nuevoHorario.fecha, todo_el_dia: nuevoHorario.todo_el_dia, hora_inicio: nuevoHorario.hora_inicio, hora_fin: nuevoHorario.hora_fin_hora, motivo: nuevoHorario.motivo })
     }
+    let exitosos = 0
+    let ultimoError = ''
     for (const b of bloques) {
       const res = await fetch('/api/admin/horarios', { method: 'POST', headers: authHeaders(), body: JSON.stringify(b) })
-      if (res.ok) { const data = await res.json(); setHorarios(hs => [...hs, data]) }
+      if (res.ok) { const data = await res.json(); setHorarios(hs => [...hs, data]); exitosos++ }
+      else { const err = await res.json().catch(() => ({})); ultimoError = err.error || 'Error desconocido' }
     }
-    setShowNuevoHorario(false); toast.success(`${bloques.length} horario(s) bloqueado(s)`)
+    setShowNuevoHorario(false)
+    if (exitosos === bloques.length) toast.success(`${exitosos} horario(s) bloqueado(s)`)
+    else if (exitosos > 0) toast.error(`Se bloquearon ${exitosos} de ${bloques.length}. Error: ${ultimoError}`)
+    else toast.error(`No se pudo bloquear el horario. ${ultimoError}`)
   }
 
   async function desbloquearHorario(id: string) {
     if (!confirm('¿Desbloquear?')) return
-    await fetch('/api/admin/horarios', { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) })
+    const res = await fetch('/api/admin/horarios', { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      toast.error(err.error || 'No se pudo desbloquear el horario'); return
+    }
     setHorarios(hs => hs.filter(h => h.id !== id)); toast.success('Horario desbloqueado')
   }
 
@@ -369,6 +428,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     { id: 'colecciones', label: 'Galerías', icon: Images, badge: 0 },
     { id: 'clientes', label: 'Clientas', icon: Users, badge: 0 },
     { id: 'horarios', label: 'Horarios', icon: Clock, badge: 0 },
+    { id: 'sitio', label: 'Imágenes del Sitio', icon: Images, badge: 0 },
   ]
 
   return (
@@ -751,6 +811,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <p className="font-medium text-sm">{p.nombre}</p>
                         <p className="font-cormorant text-lg">{formatPrecio(p.precio)}</p>
                         {p.destacado && <span className="text-dorado text-xs flex items-center gap-0.5"><Star size={10} fill="currentColor" /> Destacado</span>}
+                        {!p.activo && <span className="text-red-400/70 text-xs flex items-center gap-0.5 mt-0.5"><Power size={10} /> Inactivo · oculto en la tienda</span>}
                       </div>
                     </div>
                     {p.descripcion && <p className="text-marfil/40 text-xs mb-3 line-clamp-2">{p.descripcion}</p>}
@@ -765,7 +826,13 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <button onClick={() => toggleDestacado(p.id, !p.destacado)} className={`text-xs px-2.5 py-1.5 border transition-all flex items-center gap-1 ${p.destacado ? 'border-dorado/30 text-dorado bg-dorado/8' : 'border-marfil/10 text-marfil/30 hover:border-dorado/30 hover:text-dorado'}`}><Star size={10} fill={p.destacado ? 'currentColor' : 'none'} /></button>
                         <button onClick={() => { const prod = p as any; setNuevoProducto({ nombre:prod.nombre, descripcion:prod.descripcion||'', precio:String(prod.precio), categoria:prod.categoria, stock:String(prod.stock), slug:prod.slug, imagenes:prod.imagenes||[], destacado:prod.destacado||false }); setProductoEditando(p.id); setShowNuevoProducto(true) }}
                           className="text-xs px-2.5 py-1.5 border border-dorado/20 text-dorado/60 hover:bg-dorado/10 transition-all">Editar</button>
-                        <button onClick={() => eliminarProducto(p.id)} className="text-xs px-2.5 py-1.5 border border-red-400/20 text-red-400/50 hover:bg-red-400/10 transition-all"><Trash2 size={11} /></button>
+                        <button onClick={() => toggleActivoProducto(p.id, !p.activo)}
+                          title={p.activo ? 'Desactivar producto' : 'Activar producto'}
+                          className={`text-xs px-2.5 py-1.5 border transition-all flex items-center gap-1 ${p.activo ? 'border-marfil/10 text-marfil/40 hover:border-red-400/30 hover:text-red-400/70' : 'border-green-400/30 text-green-400/70 bg-green-400/5 hover:bg-green-400/10'}`}>
+                          <Power size={11} /> {p.activo ? 'Desactivar' : 'Activar'}
+                        </button>
+                        <button onClick={() => eliminarProducto(p.id)} title="Eliminar producto definitivamente"
+                          className="text-xs px-2.5 py-1.5 border border-red-400/20 text-red-400/50 hover:bg-red-400/10 transition-all"><Trash2 size={11} /></button>
                       </div>
                     </div>
                   </div>
@@ -973,7 +1040,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === 'horarios' && (
             <div>
               <div className="flex items-center justify-between mb-5">
-                <div><h1 className="font-cormorant text-2xl italic">Horarios Bloqueados</h1><p className="text-marfil/30 text-xs mt-0.5">Lunes a Sábados 10:00 — 19:00 hs</p></div>
+                <div><h1 className="font-cormorant text-2xl italic">Horarios Bloqueados</h1><p className="text-marfil/30 text-xs mt-0.5">Lunes a Viernes 11:00 — 18:00 hs · Sábados 11:00 — 16:00 hs</p></div>
                 <button onClick={() => setShowNuevoHorario(!showNuevoHorario)} className="btn-gold flex items-center gap-1.5 py-2 px-4 text-xs"><Plus size={12} /> Bloquear</button>
               </div>
               {showNuevoHorario && (
@@ -1031,6 +1098,74 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </div>
             </div>
           )}
+
+          {tab === 'sitio' && (() => {
+            const PORTADAS = [
+              { campo: 'portada_novias', label: 'Portada · Novias', fallback: '/images/cat-novias.jpg' },
+              { campo: 'portada_quinceaneras', label: 'Portada · Quinceañeras', fallback: '/images/cat-quinces.jpg' },
+              { campo: 'portada_gala', label: 'Portada · Gala & Cóctel', fallback: '/images/cat-gala.jpg' },
+              { campo: 'portada_miss', label: 'Portada · Miss & Certámenes', fallback: '/images/cat-miss.jpg' },
+            ]
+            const IG_FALLBACKS = ['/images/hero.jpg','/images/cat-miss.jpg','/images/cat-quinces.jpg','/images/cat-gala.jpg','/images/cat-novias.jpg','/images/cta-bg.jpg']
+            const igActuales: string[] = Array.isArray(configSitio.instagram_imagenes) ? configSitio.instagram_imagenes : []
+
+            return (
+              <div>
+                <div className="mb-6">
+                  <h1 className="font-cormorant text-2xl italic">Imágenes del Sitio</h1>
+                  <p className="text-marfil/30 text-xs mt-0.5">Cambiá el hero, las portadas de colecciones y la grilla de Instagram sin tocar código. Los cambios se ven al instante en la web.</p>
+                </div>
+
+                {/* Hero */}
+                <div className="card-dark mb-6">
+                  <p className="text-xs text-dorado tracking-widest uppercase mb-3">Hero · Portada principal</p>
+                  <label className="relative block cursor-pointer group overflow-hidden border border-marfil/10" style={{ aspectRatio: '16/7' }}>
+                    <img src={configSitio.hero_imagen || '/images/hero.jpg'} alt="Hero" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-negro/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      {subiendoImgSitio === 'hero_imagen' ? <RefreshCw size={16} className="animate-spin text-marfil" /> : <Upload size={16} className="text-marfil" />}
+                      <span className="text-xs text-marfil">Cambiar foto</span>
+                    </div>
+                    <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) subirImagenSitio('hero_imagen', e.target.files[0]); e.target.value = '' }} />
+                  </label>
+                </div>
+
+                {/* Portadas de colecciones */}
+                <div className="card-dark mb-6">
+                  <p className="text-xs text-dorado tracking-widest uppercase mb-3">Portadas de Colecciones</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {PORTADAS.map(p => (
+                      <div key={p.campo}>
+                        <label className="relative block cursor-pointer group overflow-hidden border border-marfil/10" style={{ aspectRatio: '2/3' }}>
+                          <img src={configSitio[p.campo] || p.fallback} alt={p.label} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-negro/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                            {subiendoImgSitio === p.campo ? <RefreshCw size={14} className="animate-spin text-marfil" /> : <Upload size={14} className="text-marfil" />}
+                          </div>
+                          <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) subirImagenSitio(p.campo, e.target.files[0]); e.target.value = '' }} />
+                        </label>
+                        <p className="text-xs text-marfil/40 mt-1.5 text-center">{p.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Instagram */}
+                <div className="card-dark">
+                  <p className="text-xs text-dorado tracking-widest uppercase mb-3">Grilla de Instagram (portada)</p>
+                  <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                    {IG_FALLBACKS.map((fallback, idx) => (
+                      <label key={idx} className="relative block cursor-pointer group overflow-hidden border border-marfil/10 aspect-square">
+                        <img src={igActuales[idx] || fallback} alt={`Instagram ${idx + 1}`} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-negro/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          {subiendoImgSitio === `instagram-${idx}` ? <RefreshCw size={14} className="animate-spin text-marfil" /> : <Upload size={14} className="text-marfil" />}
+                        </div>
+                        <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) subirImagenInstagram(idx, e.target.files[0]); e.target.value = '' }} />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
 
         </div>
       </main>

@@ -72,12 +72,11 @@ export default function GaleriaColeccion({ vestidos, categoria }: { vestidos: Ve
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px">
             {vestidos.map((v, i) => {
               const fotos = getFotos(v)
-              const grande = i % 7 === 0 || i % 7 === 4
               return (
                 <div
                   key={v.id}
-                  className={`relative overflow-hidden group cursor-pointer ${grande ? 'sm:col-span-2 lg:col-span-2' : ''}`}
-                  style={{ aspectRatio: grande ? '16/9' : '2/3' }}
+                  className="relative overflow-hidden group cursor-pointer"
+                  style={{ aspectRatio: '2/3' }}
                   onClick={() => abrirLightbox(v)}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}

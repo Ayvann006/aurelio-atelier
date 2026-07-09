@@ -22,16 +22,16 @@ export function formatHora(hora: string): string {
   return `${h}:${m} hs`
 }
 
-// Lunes a sábado: 10:00 - 18:00 (último turno, termina a las 19:00)
+// Lunes a viernes: 11:00 - 18:00. Sábados: 11:00 - 16:00. Domingo cerrado.
 export function getHorariosDisponibles(fecha: string): string[] {
   const d = new Date(fecha + 'T00:00:00')
   const dow = d.getDay() // 0=Dom, 6=Sáb
   if (dow === 0) return [] // Domingo cerrado
-  // Lunes(1) a Sábado(6): 10 a 18 (turnos de 1h, el de 18 termina a las 19)
-  return ['10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00']
+  if (dow === 6) return ['11:00','12:00','13:00','14:00','15:00','16:00'] // Sábado: 11 a 16
+  return ['11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00'] // Lunes a viernes: 11 a 18
 }
 
-export const HORARIOS_DISPONIBLES = ['10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00']
+export const HORARIOS_DISPONIBLES = ['11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00']
 
 export const TIPOS_EVENTO = [
   { value: 'novia', label: 'Novia' },

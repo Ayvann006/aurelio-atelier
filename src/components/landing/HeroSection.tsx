@@ -1,11 +1,15 @@
 import Link from 'next/link'
+import { getConfiguracionSitio } from '@/lib/supabase'
 
-export default function HeroSection() {
+export default async function HeroSection() {
+  const config = await getConfiguracionSitio()
+  const heroImagen = config?.hero_imagen || '/images/hero.jpg'
+
   return (
     <section className="relative h-screen min-h-[640px] flex items-center justify-center overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/images/hero.jpg')", filter: 'brightness(0.25)' }}
+        style={{ backgroundImage: `url('${heroImagen}')`, filter: 'brightness(0.25)' }}
       />
       <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, rgba(9,9,9,0.2) 0%, rgba(9,9,9,0.6) 50%, rgba(9,9,9,0.95) 100%)' }} />
       <div className="relative text-center px-6 max-w-4xl mx-auto">

@@ -34,7 +34,9 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   if (!isAuthorized(req)) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   const { id } = await req.json()
+  if (!id) return NextResponse.json({ error: 'Id requerido' }, { status: 400 })
   const supabase = createServiceClient()
-  await supabase.from('productos').update({ activo: false }).eq('id', id)
+  const { error } = await supabase.from('productos').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
