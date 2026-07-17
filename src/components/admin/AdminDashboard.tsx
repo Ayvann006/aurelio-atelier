@@ -108,6 +108,10 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     try {
       const res = await fetch(`/api/admin/${tipo}`, { headers: { 'x-admin-token': getToken() } })
       const data = await res.json()
+      if (!res.ok) {
+        if (tipo === 'configuracion') toast.error(`No se pudo cargar la configuracion del sitio: ${data?.error || 'error desconocido'}. Verifica que hayas corrido supabase/schema_v4.sql en Supabase.`)
+        return
+      }
       if (tipo === 'citas') setCitas(data ?? [])
       if (tipo === 'pedidos') setPedidos(data ?? [])
       if (tipo === 'productos') setProductos(data ?? [])
@@ -258,8 +262,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       const json = await res.json()
       if (res.ok && json.url) {
         const patchRes = await fetch('/api/admin/configuracion', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ [campo]: json.url }) })
-        if (patchRes.ok) { const data = await patchRes.json(); setConfigSitio(data); toast.success('Imagen actualizada') }
-        else toast.error('No se pudo guardar la imagen')
+        const patchJson = await patchRes.json().catch(() => ({}))
+        if (patchRes.ok) { setConfigSitio(patchJson); toast.success('Imagen actualizada') }
+        else toast.error(`No se pudo guardar la imagen: ${patchJson?.error || 'error desconocido'}`)
       } else toast.error(json.error || 'Error al subir')
       setSubiendoImgSitio(null)
     }
@@ -278,8 +283,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         while (actuales.length < 6) actuales.push('')
         actuales[idx] = json.url
         const patchRes = await fetch('/api/admin/configuracion', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ instagram_imagenes: actuales }) })
-        if (patchRes.ok) { const data = await patchRes.json(); setConfigSitio(data); toast.success('Imagen actualizada') }
-        else toast.error('No se pudo guardar la imagen')
+        const patchJson = await patchRes.json().catch(() => ({}))
+        if (patchRes.ok) { setConfigSitio(patchJson); toast.success('Imagen actualizada') }
+        else toast.error(`No se pudo guardar la imagen: ${patchJson?.error || 'error desconocido'}`)
       } else toast.error(json.error || 'Error al subir')
       setSubiendoImgSitio(null)
     }

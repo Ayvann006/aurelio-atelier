@@ -151,3 +151,45 @@ export function generarEmailCita(cita: {
 </html>`,
   }
 }
+
+// Notificación push al celular del atelier (via ntfy.sh) cuando se agenda una cita.
+// No requiere cuenta ni costo: se configura un "topic" privado en NTFY_TOPIC (.env.local)
+// y se instala la app gratuita ntfy en el celu, suscribiéndose a ese mismo topic.
+// Si no está configurado el topic, simplemente no hace nada (no rompe el flujo de citas).
+export async function enviarNotificacionPushCita(cita: {
+  cliente_nombre: string
+  cliente_telefono: string
+  fecha: string
+  hora: string
+  tipo_evento: string
+  tipo_cita: string
+  notas?: string
+}) {
+  const topic = process.env.NTFY_TOPIC
+  if (!topic) return
+
+  const mensaje = [
+    `Cliente: ${cita.cliente_nombre}`,
+    `Fecha: ${cita.fecha} a las ${cita.hora} hs`,
+    `Evento: ${cita.tipo_evento} · Cita: ${cita.tipo_cita.replace(/-/g, ' ')}`,
+    `Tel: ${cita.cliente_telefono}`,
+    cita.notas ? `Notas: ${cita.notas}` : null,
+  ].filter(Boolean).join('\n')
+
+  const waClickLink = `https://wa.me/${cita.cliente_telefono.replace(/\D/g, '')}`
+
+  try {
+    await fetch(`https://ntfy.sh/${topic}`, {
+      method: 'POST',
+      headers: {
+        'Title': 'Nueva cita agendada',
+        'Priority': 'high',
+        'Tags': 'bell,dress',
+        'Click': waClickLink,
+      },
+      body: mensaje,
+    })
+  } catch (e) {
+    console.error('Error enviando notificacion push:', e)
+  }
+}

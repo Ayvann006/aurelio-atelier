@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { crearPreferenciaCita } from '@/lib/mercadopago'
-import { generarMensajeWA, generarEmailCita } from '@/lib/notificaciones'
+import { generarMensajeWA, generarEmailCita, enviarNotificacionPushCita } from '@/lib/notificaciones'
 import { z } from 'zod'
 import { getHorariosDisponibles } from '@/lib/utils'
 
@@ -115,6 +115,17 @@ export async function POST(req: NextRequest) {
 
     // ── Notificaciones ──
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+    // Notificación push al celular del atelier (no bloquea la respuesta si falla)
+    enviarNotificacionPushCita({
+      cliente_nombre: data.cliente_nombre,
+      cliente_telefono: data.cliente_telefono,
+      fecha: data.fecha,
+      hora: data.hora,
+      tipo_evento: data.tipo_evento,
+      tipo_cita: data.tipo_cita,
+      notas: data.notas,
+    }).catch((e) => console.error('Error notificacion push:', e))
 
     // WhatsApp para la clienta (link directo)
     const msgClienta = generarMensajeWA({
