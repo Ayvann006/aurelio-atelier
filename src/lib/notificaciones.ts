@@ -179,7 +179,7 @@ export async function enviarNotificacionPushCita(cita: {
   const waClickLink = `https://wa.me/${cita.cliente_telefono.replace(/\D/g, '')}`
 
   try {
-    await fetch(`https://ntfy.sh/${topic}`, {
+    const res = await fetch(`https://ntfy.sh/${topic}`, {
       method: 'POST',
       headers: {
         'Title': 'Nueva cita agendada',
@@ -188,8 +188,12 @@ export async function enviarNotificacionPushCita(cita: {
         'Click': waClickLink,
       },
       body: mensaje,
+      signal: AbortSignal.timeout(8000),
     })
+    if (!res.ok) {
+      console.error('ntfy.sh respondio con error:', res.status, await res.text().catch(() => ''))
+    }
   } catch (e) {
-    console.error('Error enviando notificacion push:', e)
+    console.error('Error enviando notificacion push (revisa NTFY_TOPIC en las variables de entorno):', e)
   }
 }

@@ -116,16 +116,23 @@ export async function POST(req: NextRequest) {
     // ── Notificaciones ──
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-    // Notificación push al celular del atelier (no bloquea la respuesta si falla)
-    enviarNotificacionPushCita({
-      cliente_nombre: data.cliente_nombre,
-      cliente_telefono: data.cliente_telefono,
-      fecha: data.fecha,
-      hora: data.hora,
-      tipo_evento: data.tipo_evento,
-      tipo_cita: data.tipo_cita,
-      notas: data.notas,
-    }).catch((e) => console.error('Error notificacion push:', e))
+    // Notificación push al celular del atelier.
+    // OJO: se espera (await) a propósito — en Vercel (serverless) si no se espera
+    // una llamada async antes de responder, la función puede cortarse apenas se
+    // manda la respuesta y la notificación queda a mitad de camino sin llegar a salir.
+    try {
+      await enviarNotificacionPushCita({
+        cliente_nombre: data.cliente_nombre,
+        cliente_telefono: data.cliente_telefono,
+        fecha: data.fecha,
+        hora: data.hora,
+        tipo_evento: data.tipo_evento,
+        tipo_cita: data.tipo_cita,
+        notas: data.notas,
+      })
+    } catch (e) {
+      console.error('Error notificacion push:', e)
+    }
 
     // WhatsApp para la clienta (link directo)
     const msgClienta = generarMensajeWA({
