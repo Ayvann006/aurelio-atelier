@@ -1221,7 +1221,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <p className="text-xs text-dorado tracking-widest uppercase mb-3">Grilla de Instagram (portada)</p>
                   <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
                     {IG_FALLBACKS.map((fallback, idx) => (
-                      <label key={idx} className="relative block cursor-pointer group overflow-hidden border border-marfil/10 aspect-square">
+                      <label key={idx} className="relative block cursor-pointer group overflow-hidden border border-marfil/10" style={{ aspectRatio: '3/4' }}>
                         <img src={igActuales[idx] || fallback} alt={`Instagram ${idx + 1}`} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-negro/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           {subiendoImgSitio === `instagram-${idx}` ? <RefreshCw size={14} className="animate-spin text-marfil" /> : <Upload size={14} className="text-marfil" />}
