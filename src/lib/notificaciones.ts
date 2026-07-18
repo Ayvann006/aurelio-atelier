@@ -152,10 +152,10 @@ export function generarEmailCita(cita: {
   }
 }
 
-// Notificación push al celular del atelier (via ntfy.sh) cuando se agenda una cita.
-// No requiere cuenta ni costo: se configura un "topic" privado en NTFY_TOPIC (.env.local)
-// y se instala la app gratuita ntfy en el celu, suscribiéndose a ese mismo topic.
-// Si no está configurado el topic, simplemente no hace nada (no rompe el flujo de citas).
+// Notificación al atelier por Telegram cuando se agenda una cita.
+// Requiere TELEGRAM_BOT_TOKEN (token del bot creado con @BotFather) y
+// TELEGRAM_CHAT_ID (tu chat_id personal, obtenido una vez via /getUpdates).
+// Si no están configurados, no hace nada (no rompe el flujo de citas).
 export async function enviarNotificacionPushCita(cita: {
   cliente_nombre: string
   cliente_telefono: string
@@ -165,10 +165,13 @@ export async function enviarNotificacionPushCita(cita: {
   tipo_cita: string
   notas?: string
 }) {
-  const topic = process.env.NTFY_TOPIC
-  if (!topic) return
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!token || !chatId) return
 
   const mensaje = [
+    '🌹 Nueva cita agendada',
+    '',
     `Cliente: ${cita.cliente_nombre}`,
     `Fecha: ${cita.fecha} a las ${cita.hora} hs`,
     `Evento: ${cita.tipo_evento} · Cita: ${cita.tipo_cita.replace(/-/g, ' ')}`,
@@ -176,24 +179,17 @@ export async function enviarNotificacionPushCita(cita: {
     cita.notas ? `Notas: ${cita.notas}` : null,
   ].filter(Boolean).join('\n')
 
-  const waClickLink = `https://wa.me/${cita.cliente_telefono.replace(/\D/g, '')}`
-
   try {
-    const res = await fetch(`https://ntfy.sh/${topic}`, {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
-      headers: {
-        'Title': 'Nueva cita agendada',
-        'Priority': 'high',
-        'Tags': 'bell,dress',
-        'Click': waClickLink,
-      },
-      body: mensaje,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: mensaje }),
       signal: AbortSignal.timeout(8000),
     })
     if (!res.ok) {
-      console.error('ntfy.sh respondio con error:', res.status, await res.text().catch(() => ''))
+      console.error('Telegram respondio con error:', res.status, await res.text().catch(() => ''))
     }
   } catch (e) {
-    console.error('Error enviando notificacion push (revisa NTFY_TOPIC en las variables de entorno):', e)
+    console.error('Error enviando notificacion Telegram (revisa TELEGRAM_BOT_TOKEN y TELEGRAM_CHAT_ID):', e)
   }
 }
