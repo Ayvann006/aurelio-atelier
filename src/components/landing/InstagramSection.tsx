@@ -36,7 +36,8 @@ export default async function InstagramSection() {
               href={IG_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative overflow-hidden group aspect-square"
+              className="relative overflow-hidden group"
+              style={{ aspectRatio: '3/4' }}
             >
               <img
                 src={post.img}
