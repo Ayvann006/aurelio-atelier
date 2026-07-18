@@ -71,7 +71,7 @@ export default function ProductoDetalle({ producto, relacionados, reviews }: Pro
         body: JSON.stringify(reviewForm),
       })
       if (res.ok) {
-        toast.success('¡Gracias por tu reseña!')
+        toast.success('¡Gracias por tu reseña! Se publicará una vez que la revisemos.')
         setShowReviewForm(false)
         setReviewForm({ nombre: '', email: '', estrellas: 5, comentario: '' })
       } else toast.error('Error al enviar la reseña')

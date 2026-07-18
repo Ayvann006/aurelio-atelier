@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { obtenerPago } from '@/lib/mercadopago'
+import { enviarNotificacionSenaPagada, enviarNotificacionPedidoPagado } from '@/lib/notificaciones'
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,10 +14,16 @@ export async function POST(req: NextRequest) {
 
       if (ref?.startsWith('cita-')) {
         const citaId = ref.replace('cita-', '')
+        const senaPagada = pago.status === 'approved'
         await supabase.from('citas').update({
-          sena_pagada: pago.status === 'approved',
+          sena_pagada: senaPagada,
           mp_payment_id: pago.id?.toString(),
         }).eq('id', citaId)
+
+        if (senaPagada) {
+          const { data: cita } = await supabase.from('citas').select('cliente_nombre, cliente_telefono, fecha, hora').eq('id', citaId).single()
+          if (cita) await enviarNotificacionSenaPagada(cita)
+        }
       } else if (ref) {
         const nuevoEstado = pago.status === 'approved' ? 'pagado' : 'pendiente'
         await supabase.from('pedidos').update({
@@ -34,7 +41,7 @@ export async function POST(req: NextRequest) {
         }).eq('id', ref)
 
         if (pago.status === 'approved') {
-          const { data: pedido } = await supabase.from('pedidos').select('items').eq('id', ref).single()
+          const { data: pedido } = await supabase.from('pedidos').select('numero, cliente_nombre, cliente_telefono, total, items').eq('id', ref).single()
           if (pedido?.items) {
             for (const item of pedido.items as any[]) {
               const { data: prod } = await supabase.from('productos').select('stock').eq('id', item.producto_id).single()
@@ -43,6 +50,7 @@ export async function POST(req: NextRequest) {
               }
             }
           }
+          if (pedido) await enviarNotificacionPedidoPagado(pedido)
         }
       }
     }

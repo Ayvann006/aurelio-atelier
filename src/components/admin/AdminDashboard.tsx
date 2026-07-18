@@ -12,7 +12,7 @@ import CalendarioCitas from './CalendarioCitas'
 import { toast } from 'sonner'
 import type { Cita, Pedido, Producto } from '@/types'
 
-type Tab = 'dashboard' | 'citas' | 'pedidos' | 'productos' | 'colecciones' | 'clientes' | 'horarios' | 'sitio'
+type Tab = 'dashboard' | 'citas' | 'pedidos' | 'productos' | 'colecciones' | 'clientes' | 'horarios' | 'sitio' | 'reviews' | 'cupones'
 
 const ESTADO_PEDIDO_COLORS: Record<string, string> = {
   pendiente: 'text-yellow-400/70 bg-yellow-400/10',
@@ -66,6 +66,11 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [clientes, setClientes] = useState<any[]>([])
   const [horarios, setHorarios] = useState<any[]>([])
   const [configSitio, setConfigSitio] = useState<any>({})
+  const [reviews, setReviews] = useState<any[]>([])
+  const [cupones, setCupones] = useState<any[]>([])
+  const [showNuevoCupon, setShowNuevoCupon] = useState(false)
+  const [cuponEditando, setCuponEditando] = useState<string | null>(null)
+  const [nuevoCupon, setNuevoCupon] = useState({ codigo: '', descuento_pct: '', descuento_fijo: '', usos_max: '', vence_en: '' })
   const [subiendoImgSitio, setSubiendoImgSitio] = useState<string | null>(null)
   const [categorias, setCategorias] = useState<any[]>([])
   const [cargando, setCargando] = useState(false)
@@ -119,13 +124,15 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       if (tipo === 'clientes') setClientes(data ?? [])
       if (tipo === 'horarios') setHorarios(data ?? [])
       if (tipo === 'configuracion') setConfigSitio(data ?? {})
+      if (tipo === 'reviews') setReviews(data ?? [])
+      if (tipo === 'cupones') setCupones(data ?? [])
       if (tipo === 'categorias') setCategorias(data ?? [])
     } finally { setCargando(false) }
   }
 
   useEffect(() => {
     cargar('citas'); cargar('pedidos'); cargar('productos')
-    cargar('colecciones'); cargar('clientes'); cargar('horarios'); cargar('categorias'); cargar('configuracion')
+    cargar('colecciones'); cargar('clientes'); cargar('horarios'); cargar('categorias'); cargar('configuracion'); cargar('reviews'); cargar('cupones')
   }, [])
 
   function exportCSV(tipo: 'clientes' | 'pedidos') {
@@ -313,6 +320,58 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setColecciones(cs => cs.filter(c => c.id !== id)); toast.success('Diseño eliminado')
   }
 
+  async function aprobarReview(id: string) {
+    const res = await fetch('/api/admin/reviews', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ id, activo: true }) })
+    if (!res.ok) { toast.error('No se pudo aprobar la reseña'); return }
+    setReviews(rs => rs.map(r => r.id === id ? { ...r, activo: true } : r))
+    toast.success('Reseña publicada')
+  }
+
+  async function rechazarReview(id: string) {
+    if (!confirm('¿Rechazar y eliminar esta reseña? No se puede deshacer.')) return
+    const res = await fetch('/api/admin/reviews', { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) })
+    if (!res.ok) { toast.error('No se pudo rechazar la reseña'); return }
+    setReviews(rs => rs.filter(r => r.id !== id))
+    toast.success('Reseña rechazada')
+  }
+
+  async function guardarCupon() {
+    if (!nuevoCupon.codigo.trim()) { toast.error('Código requerido'); return }
+    if (!nuevoCupon.descuento_pct && !nuevoCupon.descuento_fijo) { toast.error('Cargá un % de descuento o un monto fijo'); return }
+    const body: any = {
+      codigo: nuevoCupon.codigo.trim(),
+      descuento_pct: nuevoCupon.descuento_pct ? parseInt(nuevoCupon.descuento_pct) : null,
+      descuento_fijo: nuevoCupon.descuento_fijo ? parseFloat(nuevoCupon.descuento_fijo) : null,
+      usos_max: nuevoCupon.usos_max ? parseInt(nuevoCupon.usos_max) : null,
+      vence_en: nuevoCupon.vence_en || null,
+    }
+    const method = cuponEditando ? 'PATCH' : 'POST'
+    if (cuponEditando) body.id = cuponEditando
+    else body.activo = true
+    const res = await fetch('/api/admin/cupones', { method, headers: authHeaders(), body: JSON.stringify(body) })
+    if (!res.ok) { const err = await res.json().catch(() => ({})); toast.error(err.error || 'No se pudo guardar el cupón'); return }
+    const data = await res.json()
+    if (cuponEditando) { setCupones(cs => cs.map(c => c.id === cuponEditando ? data : c)); toast.success('Cupón actualizado') }
+    else { setCupones(cs => [data, ...cs]); toast.success('Cupón creado') }
+    setNuevoCupon({ codigo: '', descuento_pct: '', descuento_fijo: '', usos_max: '', vence_en: '' })
+    setShowNuevoCupon(false); setCuponEditando(null)
+  }
+
+  async function toggleActivoCupon(id: string, activo: boolean) {
+    const res = await fetch('/api/admin/cupones', { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ id, activo }) })
+    if (!res.ok) { toast.error('No se pudo actualizar el cupón'); return }
+    setCupones(cs => cs.map(c => c.id === id ? { ...c, activo } : c))
+    toast.success(activo ? 'Cupón activado' : 'Cupón desactivado')
+  }
+
+  async function eliminarCupon(id: string) {
+    if (!confirm('¿Eliminar este cupón definitivamente?')) return
+    const res = await fetch('/api/admin/cupones', { method: 'DELETE', headers: authHeaders(), body: JSON.stringify({ id }) })
+    if (!res.ok) { toast.error('No se pudo eliminar el cupón'); return }
+    setCupones(cs => cs.filter(c => c.id !== id))
+    toast.success('Cupón eliminado')
+  }
+
   async function crearCliente() {
     if (!nuevoCliente.nombre || !nuevoCliente.email) { toast.error('Nombre y email requeridos'); return }
     const res = await fetch('/api/admin/clientes', { method: 'POST', headers: authHeaders(), body: JSON.stringify(nuevoCliente) })
@@ -425,6 +484,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // Notification badges
   const pedidosPendientes = pedidos.filter(p => p.estado === 'pendiente' && !(p as any).oculto).length
   const citasConfirmadas = citas.filter(c => c.estado === 'confirmada').length
+  const reviewsPendientes = reviews.filter(r => !r.activo).length
 
   const TABS = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3, badge: 0 },
@@ -435,6 +495,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     { id: 'clientes', label: 'Clientas', icon: Users, badge: 0 },
     { id: 'horarios', label: 'Horarios', icon: Clock, badge: 0 },
     { id: 'sitio', label: 'Imágenes del Sitio', icon: Images, badge: 0 },
+    { id: 'reviews', label: 'Reseñas', icon: Star, badge: reviewsPendientes },
+    { id: 'cupones', label: 'Cupones', icon: Tag, badge: 0 },
   ]
 
   return (
@@ -1172,6 +1234,115 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </div>
             )
           })()}
+
+          {tab === 'reviews' && (
+            <div>
+              <div className="mb-6">
+                <h1 className="font-cormorant text-2xl italic">Reseñas de Productos</h1>
+                <p className="text-marfil/30 text-xs mt-0.5">Las reseñas nuevas quedan pendientes hasta que las aprobás. Una vez aprobadas se ven en la tienda.</p>
+              </div>
+
+              {reviewsPendientes > 0 && (
+                <p className="text-dorado text-xs tracking-widest uppercase mb-3">Pendientes ({reviewsPendientes})</p>
+              )}
+              <div className="space-y-3 mb-8">
+                {reviews.filter(r => !r.activo).map(r => (
+                  <div key={r.id} className="card-dark border border-dorado/15">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="text-sm font-medium">{r.nombre}</p>
+                        <p className="text-marfil/30 text-xs">{r.productos?.nombre || 'Producto eliminado'}</p>
+                      </div>
+                      <div className="flex gap-0.5">
+                        {[1,2,3,4,5].map(s => <Star key={s} size={12} className={s <= r.estrellas ? 'text-dorado fill-dorado' : 'text-marfil/10'} strokeWidth={1} />)}
+                      </div>
+                    </div>
+                    <p className="text-marfil/60 text-sm italic mb-3">"{r.comentario}"</p>
+                    <div className="flex gap-2">
+                      <button onClick={() => aprobarReview(r.id)} className="text-xs px-3 py-1.5 border border-green-400/30 text-green-400/70 hover:bg-green-400/10 transition-all">Aprobar</button>
+                      <button onClick={() => rechazarReview(r.id)} className="text-xs px-3 py-1.5 border border-red-400/20 text-red-400/50 hover:bg-red-400/10 transition-all">Rechazar</button>
+                    </div>
+                  </div>
+                ))}
+                {reviewsPendientes === 0 && <p className="text-center text-marfil/25 text-sm py-8">No hay reseñas pendientes</p>}
+              </div>
+
+              <p className="text-marfil/30 text-xs tracking-widest uppercase mb-3">Publicadas</p>
+              <div className="space-y-3">
+                {reviews.filter(r => r.activo).map(r => (
+                  <div key={r.id} className="card-dark">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="text-sm font-medium">{r.nombre}</p>
+                        <p className="text-marfil/30 text-xs">{r.productos?.nombre || 'Producto eliminado'}</p>
+                      </div>
+                      <div className="flex gap-0.5">
+                        {[1,2,3,4,5].map(s => <Star key={s} size={12} className={s <= r.estrellas ? 'text-dorado fill-dorado' : 'text-marfil/10'} strokeWidth={1} />)}
+                      </div>
+                    </div>
+                    <p className="text-marfil/50 text-sm italic mb-3">"{r.comentario}"</p>
+                    <button onClick={() => rechazarReview(r.id)} className="text-xs px-3 py-1.5 border border-red-400/20 text-red-400/50 hover:bg-red-400/10 transition-all">Eliminar</button>
+                  </div>
+                ))}
+                {reviews.filter(r => r.activo).length === 0 && <p className="text-center text-marfil/25 text-sm py-8">Todavía no hay reseñas publicadas</p>}
+              </div>
+            </div>
+          )}
+
+          {tab === 'cupones' && (
+            <div>
+              <div className="flex items-center justify-between mb-5">
+                <div><h1 className="font-cormorant text-2xl italic">Cupones de Descuento</h1><p className="text-marfil/30 text-xs mt-0.5">Se aplican en el checkout de la tienda</p></div>
+                <button onClick={() => { setCuponEditando(null); setNuevoCupon({ codigo: '', descuento_pct: '', descuento_fijo: '', usos_max: '', vence_en: '' }); setShowNuevoCupon(true) }}
+                  className="btn-gold flex items-center gap-1.5 py-2 px-4 text-xs"><Plus size={12} /> Nuevo cupón</button>
+              </div>
+
+              {showNuevoCupon && (
+                <div className="card-dark mb-5 border border-dorado/15">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs text-dorado tracking-widest uppercase">{cuponEditando ? 'Editar cupón' : 'Nuevo cupón'}</p>
+                    <button onClick={() => { setShowNuevoCupon(false); setCuponEditando(null) }}><X size={15} className="text-marfil/30" /></button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormInput label="Código *" value={nuevoCupon.codigo} onChange={v => setNuevoCupon(c => ({...c, codigo: v.toUpperCase()}))} placeholder="Ej: NOVIA10" />
+                    <FormInput label="Vence el" value={nuevoCupon.vence_en} onChange={v => setNuevoCupon(c => ({...c, vence_en: v}))} type="date" />
+                    <FormInput label="Descuento %" value={nuevoCupon.descuento_pct} onChange={v => setNuevoCupon(c => ({...c, descuento_pct: v, descuento_fijo: v ? '' : c.descuento_fijo}))} type="number" placeholder="Ej: 10" />
+                    <FormInput label="o descuento fijo $" value={nuevoCupon.descuento_fijo} onChange={v => setNuevoCupon(c => ({...c, descuento_fijo: v, descuento_pct: v ? '' : c.descuento_pct}))} type="number" placeholder="Ej: 5000" />
+                    <FormInput label="Usos máximos (opcional)" value={nuevoCupon.usos_max} onChange={v => setNuevoCupon(c => ({...c, usos_max: v}))} type="number" placeholder="Vacío = ilimitado" />
+                  </div>
+                  <div className="flex gap-3 mt-4">
+                    <button onClick={guardarCupon} className="btn-gold-fill flex-1 justify-center py-2.5 text-xs">{cuponEditando ? 'Guardar' : 'Crear cupón'}</button>
+                    <button onClick={() => { setShowNuevoCupon(false); setCuponEditando(null) }} className="btn-ghost flex-1 justify-center py-2.5 text-xs">Cancelar</button>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-px">
+                {cupones.map(c => (
+                  <div key={c.id} className={`card-dark ${!c.activo ? 'opacity-40' : ''}`}>
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="font-cormorant text-xl tracking-wider">{c.codigo}</p>
+                      <p className="text-dorado text-sm">{c.descuento_pct ? `${c.descuento_pct}%` : c.descuento_fijo ? formatPrecio(c.descuento_fijo) : ''}</p>
+                    </div>
+                    <p className="text-marfil/40 text-xs mb-3">
+                      Usos: {c.usos_actuales || 0}{c.usos_max ? ` / ${c.usos_max}` : ' (ilimitado)'}
+                      {c.vence_en ? ` · Vence ${new Date(c.vence_en).toLocaleDateString('es-AR')}` : ''}
+                    </p>
+                    <div className="flex gap-1.5 pt-3 border-t border-marfil/5">
+                      <button onClick={() => toggleActivoCupon(c.id, !c.activo)}
+                        className={`text-xs px-2.5 py-1.5 border transition-all flex-1 ${c.activo ? 'border-marfil/10 text-marfil/40 hover:border-red-400/30 hover:text-red-400/70' : 'border-green-400/30 text-green-400/70 bg-green-400/5'}`}>
+                        {c.activo ? 'Desactivar' : 'Activar'}
+                      </button>
+                      <button onClick={() => { setCuponEditando(c.id); setNuevoCupon({ codigo: c.codigo, descuento_pct: c.descuento_pct ? String(c.descuento_pct) : '', descuento_fijo: c.descuento_fijo ? String(c.descuento_fijo) : '', usos_max: c.usos_max ? String(c.usos_max) : '', vence_en: c.vence_en ? c.vence_en.substring(0,10) : '' }); setShowNuevoCupon(true) }}
+                        className="text-xs px-2.5 py-1.5 border border-dorado/20 text-dorado/60 hover:bg-dorado/10 transition-all">Editar</button>
+                      <button onClick={() => eliminarCupon(c.id)} className="text-xs px-2.5 py-1.5 border border-red-400/20 text-red-400/50 hover:bg-red-400/10 transition-all"><Trash2 size={11} /></button>
+                    </div>
+                  </div>
+                ))}
+                {cupones.length === 0 && !cargando && <p className="text-marfil/25 text-sm py-12 col-span-2 text-center">No hay cupones. Creá el primero.</p>}
+              </div>
+            </div>
+          )}
 
         </div>
       </main>

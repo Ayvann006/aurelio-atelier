@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
+import { enviarTelegram } from '@/lib/notificaciones'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -24,8 +25,12 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     const supabase = createServiceClient()
     const { data: producto } = await supabase.from('productos').select('id').eq('slug', params.slug).single()
     if (!producto) return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
-    const { data: review, error } = await supabase.from('reviews_productos').insert({ ...data, producto_id: producto.id }).select().single()
+    const { data: review, error } = await supabase.from('reviews_productos').insert({ ...data, producto_id: producto.id, activo: false }).select().single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Queda pendiente de aprobación — se avisa al atelier para que la revise
+    enviarTelegram(`📝 Nueva reseña pendiente de aprobar\n\n${data.nombre} · ${'⭐'.repeat(data.estrellas)}\n"${data.comentario}"\n\nAprobala desde el admin.`).catch(() => {})
+
     return NextResponse.json(review)
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 400 })
