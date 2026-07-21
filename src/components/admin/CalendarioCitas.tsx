@@ -59,7 +59,7 @@ export default function CalendarioCitas({ citas, onActualizar, clientes = [] }: 
     setEsNuevoCliente(false)
     setFormNueva({ cliente_nombre:'', cliente_email:'', cliente_telefono:'', tipo_evento:'novia', tipo_cita:'primera-entrevista', notas:'' })
     if (f) {
-      const res = await fetch(`/api/disponibilidad?fecha=${f}`)
+      const res = await fetch(`/api/disponibilidad?fecha=${f}`, { headers: { 'x-admin-token': getToken() } })
       const data = await res.json()
       setHorasDisp(data.disponibles || [])
     }
@@ -68,7 +68,7 @@ export default function CalendarioCitas({ citas, onActualizar, clientes = [] }: 
 
   async function cargarHoras(f: string) {
     if (!f) return
-    const res = await fetch(`/api/disponibilidad?fecha=${f}`)
+    const res = await fetch(`/api/disponibilidad?fecha=${f}`, { headers: { 'x-admin-token': getToken() } })
     const data = await res.json()
     setHorasDisp(data.disponibles || [])
   }
@@ -90,7 +90,7 @@ export default function CalendarioCitas({ citas, onActualizar, clientes = [] }: 
     try {
       const res = await fetch('/api/citas', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': getToken() },
         body: JSON.stringify({ ...formNueva, fecha: fechaNueva, hora: horaNueva }),
       })
       const json = await res.json()

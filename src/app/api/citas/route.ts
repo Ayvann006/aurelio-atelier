@@ -4,7 +4,7 @@ import { crearPreferenciaCita } from '@/lib/mercadopago'
 import { generarMensajeWA, generarEmailCita, enviarNotificacionPushCita } from '@/lib/notificaciones'
 import { z } from 'zod'
 import { getHorariosDisponibles, cumpleAntelacionMinima, duracionCita, horaAMinutos, rangosSolapan } from '@/lib/utils'
-import { isAuthorized } from '@/lib/adminAuth'
+import { esPedidoDelAdmin } from '@/lib/adminAuth'
 
 const citaSchema = z.object({
   cliente_nombre: z.string().min(2),
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Antelación mínima de 4hs (no aplica si agenda el propio admin)
-    if (!isAuthorized(req) && !cumpleAntelacionMinima(data.fecha, data.hora)) {
+    if (!esPedidoDelAdmin(req) && !cumpleAntelacionMinima(data.fecha, data.hora)) {
       return NextResponse.json({ error: 'Las citas deben agendarse con un mínimo de 4 horas de antelación' }, { status: 409 })
     }
 
