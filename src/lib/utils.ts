@@ -33,6 +33,19 @@ export function getHorariosDisponibles(fecha: string): string[] {
 
 export const HORARIOS_DISPONIBLES = ['11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00']
 
+// Buenos Aires es UTC-3 todo el año (no tiene horario de verano desde 2009).
+function fechaHoraCitaAUTC(fecha: string, hora: string): Date {
+  const [y, m, d] = fecha.split('-').map(Number)
+  const [hh, mm] = hora.split(':').map(Number)
+  return new Date(Date.UTC(y, m - 1, d, hh + 3, mm))
+}
+
+// Las citas solo se pueden agendar con un mínimo de horas de antelación (por defecto 4hs).
+export function cumpleAntelacionMinima(fecha: string, hora: string, horasMinimas = 4): boolean {
+  const citaUTC = fechaHoraCitaAUTC(fecha, hora)
+  return citaUTC.getTime() - Date.now() >= horasMinimas * 60 * 60 * 1000
+}
+
 export const TIPOS_EVENTO = [
   { value: 'novia', label: 'Novia' },
   { value: 'quinceanera', label: 'Quinceañera' },

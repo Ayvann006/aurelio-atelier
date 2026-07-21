@@ -108,10 +108,11 @@ export default function CalendarioCitas({ onSeleccionar }: Props) {
       {/* Horarios */}
       {fechaSel && (
         <div className="card-dark">
-          <div className="flex items-center gap-2 mb-5">
+          <div className="flex items-center gap-2 mb-2">
             <Clock size={14} className="text-dorado" strokeWidth={1.5} />
             <span className="text-xs tracking-widest uppercase text-marfil/50">Horarios disponibles</span>
           </div>
+          <p className="text-marfil/30 text-xs mb-5">Las citas se agendan con un mínimo de 4 horas de antelación.</p>
           {loading ? (
             <div className="flex justify-center py-6">
               <Loader2 size={20} className="text-dorado animate-spin" />
