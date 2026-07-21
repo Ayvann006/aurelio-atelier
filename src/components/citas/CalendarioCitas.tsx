@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Clock, Loader2 } from 'lucide-react'
-import { formatHora } from '@/lib/utils'
+import { ChevronLeft, ChevronRight, Clock, Loader2, MessageCircle } from 'lucide-react'
+import { formatHora, formatFecha, waLink } from '@/lib/utils'
 
 interface Props {
   onSeleccionar: (fecha: string, hora: string) => void
@@ -118,10 +118,20 @@ export default function CalendarioCitas({ onSeleccionar }: Props) {
               <Loader2 size={20} className="text-dorado animate-spin" />
             </div>
           ) : horarios.length === 0 ? (
-            <p className="text-center text-marfil/40 text-sm py-6">
-              No hay turnos disponibles este día.<br />
-              <span className="text-dorado text-xs">Por favor elegí otra fecha.</span>
-            </p>
+            <div className="text-center py-6">
+              <p className="text-marfil/40 text-sm mb-5">
+                No hay turnos disponibles este día.<br />
+                <span className="text-dorado text-xs">Por favor elegí otra fecha.</span>
+              </p>
+              <a
+                href={waLink(`Hola! Quería consultar disponibilidad para el día ${formatFecha(fechaSel)}.`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-ghost inline-flex items-center gap-2 px-6 py-2.5 text-xs"
+              >
+                <MessageCircle size={14} strokeWidth={1.5} /> Consultar disponibilidad por WhatsApp
+              </a>
+            </div>
           ) : (
             <div className="grid grid-cols-4 gap-2">
               {horarios.map((h) => (
