@@ -23,16 +23,48 @@
   --color-negro: 250 249 246;
   --color-negro2: 255 255 255;
   --color-negro3: 238 236 230;
-  --color-marfil: 30 28 26;
-  --color-marfil2: 51 48 45;
-  --color-dorado: 158 122 58;
-  --color-dorado2: 138 104 48;
+  --color-marfil: 26 24 22;
+  --color-marfil2: 48 45 42;
+  --color-dorado: 130 98 40;
+  --color-dorado2: 110 82 32;
 }
+
+/* IMPORTANTE sobre el modo día:
+   En modo noche, "marfil" es un color CLARO y bajar su opacidad (ej: text-marfil/40)
+   lo acerca al fondo oscuro — sigue siendo legible, solo más tenue.
+   En modo día invertimos "marfil" a un color OSCURO para que el texto se lea sobre
+   fondo claro. Pero si dejáramos la misma opacidad (ej: /40), el texto oscuro se
+   mezcla con el fondo blanco y queda casi invisible (el problema reportado).
+   Por eso, en .tema-claro subimos manualmente la opacidad real de cada variante
+   de texto para que el contraste sea siempre bueno, sin tener que tocar cada
+   clase del código. */
+.tema-claro .text-marfil\/8  { color: rgb(var(--color-marfil) / 0.42) !important; }
+.tema-claro .text-marfil\/10 { color: rgb(var(--color-marfil) / 0.45) !important; }
+.tema-claro .text-marfil\/15 { color: rgb(var(--color-marfil) / 0.55) !important; }
+.tema-claro .text-marfil\/20 { color: rgb(var(--color-marfil) / 0.60) !important; }
+.tema-claro .text-marfil\/25 { color: rgb(var(--color-marfil) / 0.65) !important; }
+.tema-claro .text-marfil\/30 { color: rgb(var(--color-marfil) / 0.70) !important; }
+.tema-claro .text-marfil\/35 { color: rgb(var(--color-marfil) / 0.73) !important; }
+.tema-claro .text-marfil\/40 { color: rgb(var(--color-marfil) / 0.78) !important; }
+.tema-claro .text-marfil\/50 { color: rgb(var(--color-marfil) / 0.84) !important; }
+.tema-claro .text-marfil\/55 { color: rgb(var(--color-marfil) / 0.86) !important; }
+.tema-claro .text-marfil\/60 { color: rgb(var(--color-marfil) / 0.88) !important; }
+.tema-claro .text-marfil\/70 { color: rgb(var(--color-marfil) / 0.92) !important; }
+.tema-claro .text-marfil\/80 { color: rgb(var(--color-marfil) / 0.95) !important; }
+.tema-claro .placeholder\:text-marfil\/20::placeholder { color: rgb(var(--color-marfil) / 0.60) !important; }
+.tema-claro .placeholder\:text-marfil\/30::placeholder { color: rgb(var(--color-marfil) / 0.65) !important; }
+.tema-claro .input-dark::placeholder,
+.tema-claro .select-dark::placeholder { color: rgb(var(--color-marfil) / 0.55) !important; }
+.tema-claro .text-dorado\/40 { color: rgb(var(--color-dorado) / 0.65) !important; }
+.tema-claro .text-dorado\/50 { color: rgb(var(--color-dorado) / 0.75) !important; }
+.tema-claro .text-dorado\/60 { color: rgb(var(--color-dorado) / 0.82) !important; }
+.tema-claro .text-dorado\/70 { color: rgb(var(--color-dorado) / 0.88) !important; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body { background: #090909; color: #F5F0E8; font-family: var(--font-inter); font-weight: 300; overflow-x: hidden; }
-.tema-claro { background: rgb(var(--color-negro)); color: rgb(var(--color-marfil)); }
+.tema-claro { background: rgb(var(--color-negro)); color: rgb(var(--color-marfil)); font-weight: 400; }
+.tema-claro .font-light { font-weight: 400 !important; }
 
 @layer components {
   .btn-gold {
