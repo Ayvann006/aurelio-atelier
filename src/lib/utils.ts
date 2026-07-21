@@ -61,6 +61,19 @@ export const TIPOS_CITA = [
   { value: 'entrega', label: 'Entrega', duracion: 60 },
 ]
 
+export function duracionCita(tipo: string): number {
+  return TIPOS_CITA.find((t) => t.value === tipo)?.duracion || 60
+}
+
+export function horaAMinutos(hora: string): number {
+  const [h, m] = hora.split(':').map(Number)
+  return h * 60 + m
+}
+
+export function rangosSolapan(inicioA: number, finA: number, inicioB: number, finB: number): boolean {
+  return inicioA < finB && inicioB < finA
+}
+
 export const WA_NUMBER = process.env.NEXT_PUBLIC_WA_NUMBER || '5491136205098'
 
 export function waLink(mensaje: string) {

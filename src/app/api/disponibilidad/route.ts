@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { getHorariosDisponibles, cumpleAntelacionMinima } from '@/lib/utils'
+import { getHorariosDisponibles, cumpleAntelacionMinima, duracionCita, horaAMinutos } from '@/lib/utils'
 import { isAuthorized } from '@/lib/adminAuth'
 
 export async function GET(req: NextRequest) {
@@ -27,14 +27,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ disponibles: [], bloqueado: true, motivo: bloqueadoTotal.motivo || 'Día bloqueado' })
   }
 
-  // Obtener citas existentes ese día (ocupan 1 hora cada una)
+  // Obtener citas existentes ese día. Cada una ocupa según su duración real
+  // (ej: una "Prueba de Vestido" son 90min y tapa también el turno siguiente).
   const { data: citasDelDia } = await supabase
     .from('citas')
-    .select('hora')
+    .select('hora, tipo_cita')
     .eq('fecha', fecha)
     .neq('estado', 'cancelada')
 
-  const horasOcupadas = citasDelDia?.map((c) => c.hora.substring(0, 5)) || []
+  const rangosOcupados = (citasDelDia || []).map((c) => {
+    const inicio = horaAMinutos(c.hora.substring(0, 5))
+    return { inicio, fin: inicio + duracionCita(c.tipo_cita) }
+  })
 
   // Obtener horarios bloqueados parciales
   const { data: bloqueados } = await supabase
@@ -47,7 +51,8 @@ export async function GET(req: NextRequest) {
   const esAdmin = isAuthorized(req)
 
   const disponibles = horariosBase.filter((h) => {
-    if (horasOcupadas.includes(h)) return false
+    const hMin = horaAMinutos(h)
+    if (rangosOcupados.some((r) => hMin >= r.inicio && hMin < r.fin)) return false
     if (bloqueados?.some((b) => {
       const hInicio = b.hora_inicio?.substring(0, 5)
       const hFin = b.hora_fin?.substring(0, 5)

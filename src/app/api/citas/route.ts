@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase'
 import { crearPreferenciaCita } from '@/lib/mercadopago'
 import { generarMensajeWA, generarEmailCita, enviarNotificacionPushCita } from '@/lib/notificaciones'
 import { z } from 'zod'
-import { getHorariosDisponibles, cumpleAntelacionMinima } from '@/lib/utils'
+import { getHorariosDisponibles, cumpleAntelacionMinima, duracionCita, horaAMinutos, rangosSolapan } from '@/lib/utils'
 import { isAuthorized } from '@/lib/adminAuth'
 
 const citaSchema = z.object({
@@ -55,17 +55,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Ese horario no está disponible' }, { status: 409 })
     }
 
-    // Verificar disponibilidad (que no haya otra cita en ese horario)
-    const { data: existente } = await supabase
+    // Verificar disponibilidad real, considerando la duración de cada cita
+    // (ej: una "Prueba de Vestido" son 90min y se puede superponer con la
+    // siguiente hora aunque no coincida el horario exacto).
+    const { data: citasDelDia } = await supabase
       .from('citas')
-      .select('id')
+      .select('hora, tipo_cita')
       .eq('fecha', data.fecha)
-      .eq('hora', data.hora)
       .neq('estado', 'cancelada')
-      .maybeSingle()
 
-    if (existente) {
-      return NextResponse.json({ error: 'Horario no disponible' }, { status: 409 })
+    const nuevoInicio = horaAMinutos(data.hora)
+    const nuevoFin = nuevoInicio + duracionCita(data.tipo_cita)
+    const seSuperpone = (citasDelDia || []).some((c) => {
+      const inicio = horaAMinutos(c.hora.substring(0, 5))
+      const fin = inicio + duracionCita(c.tipo_cita)
+      return rangosSolapan(nuevoInicio, nuevoFin, inicio, fin)
+    })
+
+    if (seSuperpone) {
+      return NextResponse.json({ error: 'Ese horario ya no está disponible' }, { status: 409 })
     }
 
     // Registrar clienta automáticamente
