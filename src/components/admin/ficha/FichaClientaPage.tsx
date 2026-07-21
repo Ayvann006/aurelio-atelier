@@ -144,7 +144,7 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
 
   async function cargarHoras(fecha: string) {
     if (!fecha) return
-    const res = await fetch(`/api/disponibilidad?fecha=${fecha}`)
+    const res = await fetch(`/api/disponibilidad?fecha=${fecha}`, { headers: { 'x-admin-token': token } })
     const data = await res.json()
     setHorasDisp(data.disponibles || [])
   }
@@ -155,7 +155,7 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
     try {
       const res = await fetch('/api/citas', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
         body: JSON.stringify({
           ...nuevaCita,
           cliente_nombre: cliente.nombre,
