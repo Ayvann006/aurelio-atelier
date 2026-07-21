@@ -6,11 +6,33 @@
 :root {
   --font-cormorant: 'Cormorant Garamond', serif;
   --font-inter: 'Inter', sans-serif;
+
+  /* Paleta (modo noche, por defecto en toda la web) — valores en "R G B" */
+  --color-negro: 9 9 9;
+  --color-negro2: 17 17 17;
+  --color-negro3: 24 24 24;
+  --color-marfil: 245 240 232;
+  --color-marfil2: 237 232 222;
+  --color-dorado: 201 169 110;
+  --color-dorado2: 184 149 90;
+}
+
+/* Modo día — solo se activa dentro de un contenedor con la clase .tema-claro
+   (usado en el panel de Admin). El resto de la web no se ve afectado. */
+.tema-claro {
+  --color-negro: 250 249 246;
+  --color-negro2: 255 255 255;
+  --color-negro3: 238 236 230;
+  --color-marfil: 30 28 26;
+  --color-marfil2: 51 48 45;
+  --color-dorado: 158 122 58;
+  --color-dorado2: 138 104 48;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body { background: #090909; color: #F5F0E8; font-family: var(--font-inter); font-weight: 300; overflow-x: hidden; }
+.tema-claro { background: rgb(var(--color-negro)); color: rgb(var(--color-marfil)); }
 
 @layer components {
   .btn-gold {

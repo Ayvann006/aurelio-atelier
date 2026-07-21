@@ -5,13 +5,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        negro: '#090909',
-        negro2: '#111111',
-        negro3: '#181818',
-        marfil: '#F5F0E8',
-        marfil2: '#EDE8DE',
-        dorado: '#C9A96E',
-        dorado2: '#B8955A',
+        // Definidos como variables CSS (ver globals.css) para poder soportar
+        // el modo día del admin sin tener que tocar cada clase del código:
+        // basta con redefinir estas variables dentro de .tema-claro.
+        negro: 'rgb(var(--color-negro) / <alpha-value>)',
+        negro2: 'rgb(var(--color-negro2) / <alpha-value>)',
+        negro3: 'rgb(var(--color-negro3) / <alpha-value>)',
+        marfil: 'rgb(var(--color-marfil) / <alpha-value>)',
+        marfil2: 'rgb(var(--color-marfil2) / <alpha-value>)',
+        dorado: 'rgb(var(--color-dorado) / <alpha-value>)',
+        dorado2: 'rgb(var(--color-dorado2) / <alpha-value>)',
       },
       fontFamily: {
         cormorant: ['var(--font-cormorant)', 'serif'],

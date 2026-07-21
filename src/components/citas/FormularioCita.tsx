@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 const schema = z.object({
   cliente_nombre: z.string().min(2, 'Nombre requerido'),
   cliente_email: z.string().email('Email inválido'),
-  cliente_telefono: z.string().min(8, 'Teléfono requerido'),
+  cliente_telefono: z.string().refine(v => v.replace(/\D/g, '').length >= 8, 'Ingresá un celular válido (mínimo 8 dígitos)'),
   tipo_evento: z.enum(['novia', 'quinceanera', 'gala', 'miss', 'otro']),
   tipo_cita: z.enum(['primera-entrevista', 'prueba', 'ajuste', 'entrega']),
   notas: z.string().optional(),
@@ -104,7 +104,7 @@ export default function FormularioCita({ fecha, hora, onVolver, onConfirmar }: P
           </div>
           <div>
             <label className="text-xs text-marfil/40 tracking-wider uppercase block mb-2">Teléfono / WhatsApp *</label>
-            <input {...register('cliente_telefono')} placeholder="+54 9 11 ..." className="input-dark" />
+            <input {...register('cliente_telefono')} type="tel" required placeholder="+54 9 11 ..." className="input-dark" />
             {errors.cliente_telefono && <p className="text-red-400/80 text-xs mt-1">{errors.cliente_telefono.message}</p>}
           </div>
         </div>

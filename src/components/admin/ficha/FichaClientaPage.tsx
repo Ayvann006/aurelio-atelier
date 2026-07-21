@@ -6,7 +6,7 @@ import {
   Plus, Trash2, Star, FileText, Camera, Ruler, 
   DollarSign, Clock, CheckCircle, AlertCircle, Loader2,
   MessageCircle, Mail, Download, Upload, Receipt,
-  CreditCard, Hash, CalendarDays
+  CreditCard, Hash, CalendarDays, Sun, Moon
 } from 'lucide-react'
 import { formatPrecio } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -112,6 +112,8 @@ interface Props {
 export default function FichaClientaPage({ clienteId, token }: Props) {
   const router = useRouter()
   const [cliente, setCliente] = useState<any>(null)
+  const [temaClaro, setTemaClaro] = useState(false)
+  useEffect(() => { setTemaClaro(localStorage.getItem('admin_tema') === 'claro') }, [])
   const [ficha, setFicha] = useState<any>({})
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
@@ -210,15 +212,34 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
         boceto: ficha.presupuesto_boceto || null,
       } : ficha.presupuesto
 
-      const res = await fetch('/api/admin/fichas', {
-        method: 'POST',
-        headers: hdrs(),
-        body: JSON.stringify({ ...ficha, cliente_id: clienteId, presupuesto }),
-      })
-      if (!res.ok) throw new Error('Error al guardar')
-      const data = await res.json()
+      const [resFicha, resCliente] = await Promise.all([
+        fetch('/api/admin/fichas', {
+          method: 'POST',
+          headers: hdrs(),
+          body: JSON.stringify({ ...ficha, cliente_id: clienteId, presupuesto }),
+        }),
+        fetch('/api/admin/clientes', {
+          method: 'PATCH',
+          headers: hdrs(),
+          body: JSON.stringify({
+            id: clienteId,
+            nombre: cliente.nombre,
+            email: cliente.email,
+            telefono: cliente.telefono,
+            ciudad: cliente.ciudad,
+            provincia: cliente.provincia,
+            codigo_postal: cliente.codigo_postal,
+            direccion: cliente.direccion,
+          }),
+        }),
+      ])
+      if (!resFicha.ok) throw new Error('Error al guardar la ficha')
+      if (!resCliente.ok) throw new Error('Error al guardar los datos de la clienta')
+      const data = await resFicha.json()
+      const clienteActualizado = await resCliente.json()
       setFicha(data)
-      toast.success('Ficha guardada correctamente')
+      setCliente(clienteActualizado)
+      toast.success('Ficha y datos de la clienta guardados')
     } catch (e: any) {
       toast.error(e.message)
     } finally { setGuardando(false) }
@@ -436,25 +457,29 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
   const numFactura = `AM-${clienteId.substring(0, 6).toUpperCase()}`
 
   if (cargando) return (
-    <div className="min-h-screen bg-negro flex items-center justify-center">
+    <div className={`min-h-screen bg-negro flex items-center justify-center ${temaClaro ? 'tema-claro' : ''}`}>
       <Loader2 size={24} className="text-dorado animate-spin" />
     </div>
   )
 
   if (!cliente) return (
-    <div className="min-h-screen bg-negro flex items-center justify-center">
+    <div className={`min-h-screen bg-negro flex items-center justify-center ${temaClaro ? 'tema-claro' : ''}`}>
       <p className="text-marfil/40">Clienta no encontrada</p>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-negro">
+    <div className={`min-h-screen bg-negro ${temaClaro ? 'tema-claro' : ''}`}>
       {/* Header */}
       <div className="sticky top-0 z-40 bg-negro2 border-b border-marfil/8 px-6 py-3 flex items-center justify-between print:hidden">
         <button onClick={() => router.back()} className="flex items-center gap-2 text-marfil/40 hover:text-marfil transition-colors text-sm">
           <ChevronLeft size={16} /> Volver
         </button>
         <div className="flex items-center gap-3">
+          <button onClick={() => { const nuevo = !temaClaro; setTemaClaro(nuevo); localStorage.setItem('admin_tema', nuevo ? 'claro' : 'oscuro') }}
+            className="flex items-center gap-2 text-marfil/40 hover:text-dorado transition-colors text-xs border border-marfil/10 px-3 py-1.5">
+            {temaClaro ? <Moon size={13} /> : <Sun size={13} />}
+          </button>
           <button onClick={() => setModalCita(true)} className="flex items-center gap-2 text-dorado/60 hover:text-dorado transition-colors text-xs border border-dorado/20 px-3 py-1.5">
             <Plus size={13} /> Nueva cita
           </button>
@@ -477,15 +502,18 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
         {/* Header ficha */}
         <div className="card-dark">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
+            <div className="flex-1 min-w-[240px]">
               <p className="text-dorado text-xs tracking-widest uppercase mb-1">Ficha de Clienta</p>
-              <h1 className="font-cormorant text-3xl italic font-light">{cliente.nombre}</h1>
-              <div className="flex flex-wrap gap-4 mt-2">
-                <a href={`https://wa.me/${cliente.telefono?.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
-                  className="text-marfil/50 text-sm hover:text-dorado transition-colors flex items-center gap-1">
-                  <MessageCircle size={12} /> {cliente.telefono}
-                </a>
-                <span className="text-marfil/50 text-sm">{cliente.email}</span>
+              <input value={cliente.nombre || ''} onChange={e => setCliente((c: any) => ({ ...c, nombre: e.target.value }))}
+                className="font-cormorant text-3xl italic font-light bg-transparent border-none outline-none w-full focus:bg-negro3/40 px-0" placeholder="Nombre de la clienta" />
+              <div className="flex flex-wrap gap-4 mt-2 items-center">
+                <div className="flex items-center gap-1.5">
+                  <MessageCircle size={12} className="text-marfil/40 flex-shrink-0" />
+                  <input value={cliente.telefono || ''} onChange={e => setCliente((c: any) => ({ ...c, telefono: e.target.value }))}
+                    className="text-marfil/50 text-sm bg-transparent border-none outline-none focus:bg-negro3/40 px-0" placeholder="Teléfono" />
+                </div>
+                <input value={cliente.email || ''} onChange={e => setCliente((c: any) => ({ ...c, email: e.target.value }))}
+                  className="text-marfil/50 text-sm bg-transparent border-none outline-none focus:bg-negro3/40 px-0" placeholder="Email" />
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -536,6 +564,26 @@ export default function FichaClientaPage({ clienteId, token }: Props) {
               <p className={`font-cormorant text-xl ${saldoPendiente > 0 ? 'text-dorado' : 'text-green-400/70'}`}>
                 {prespTotal ? formatPrecio(saldoPendiente) : '—'}
               </p>
+            </div>
+          </div>
+
+          {/* Datos de contacto */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 pt-5 border-t border-marfil/8">
+            <div>
+              <label className="text-xs text-marfil/30 uppercase tracking-wider block mb-1.5">Ciudad</label>
+              <input value={cliente.ciudad || ''} onChange={e => setCliente((c: any) => ({ ...c, ciudad: e.target.value }))} className="input-dark w-full text-xs py-1.5" placeholder="Ciudad" />
+            </div>
+            <div>
+              <label className="text-xs text-marfil/30 uppercase tracking-wider block mb-1.5">Provincia</label>
+              <input value={cliente.provincia || ''} onChange={e => setCliente((c: any) => ({ ...c, provincia: e.target.value }))} className="input-dark w-full text-xs py-1.5" placeholder="Provincia" />
+            </div>
+            <div>
+              <label className="text-xs text-marfil/30 uppercase tracking-wider block mb-1.5">Código Postal</label>
+              <input value={cliente.codigo_postal || ''} onChange={e => setCliente((c: any) => ({ ...c, codigo_postal: e.target.value }))} className="input-dark w-full text-xs py-1.5" placeholder="CP" />
+            </div>
+            <div>
+              <label className="text-xs text-marfil/30 uppercase tracking-wider block mb-1.5">Dirección</label>
+              <input value={cliente.direccion || ''} onChange={e => setCliente((c: any) => ({ ...c, direccion: e.target.value }))} className="input-dark w-full text-xs py-1.5" placeholder="Dirección" />
             </div>
           </div>
         </div>

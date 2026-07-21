@@ -5,7 +5,7 @@ import {
   Calendar, ShoppingBag, Package, Clock, LogOut, Plus, Trash2,
   CheckCircle, XCircle, RefreshCw, BarChart3, Upload, X, MapPin,
   TrendingUp, Images, Users, Search, Star, Filter, Download,
-  Tag, Loader2, Bell, ChevronDown, Settings, Printer, Menu, ArrowUpRight, Activity, Power
+  Tag, Loader2, Bell, ChevronDown, Settings, Printer, Menu, ArrowUpRight, Activity, Power, Sun, Moon
 } from 'lucide-react'
 import { formatPrecio, formatHora } from '@/lib/utils'
 import CalendarioCitas from './CalendarioCitas'
@@ -481,6 +481,17 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  const [temaClaro, setTemaClaro] = useState(false)
+  useEffect(() => {
+    setTemaClaro(localStorage.getItem('admin_tema') === 'claro')
+  }, [])
+  function toggleTema() {
+    setTemaClaro(t => {
+      localStorage.setItem('admin_tema', !t ? 'claro' : 'oscuro')
+      return !t
+    })
+  }
+
   // Notification badges
   const pedidosPendientes = pedidos.filter(p => p.estado === 'pendiente' && !(p as any).oculto).length
   const citasConfirmadas = citas.filter(c => c.estado === 'confirmada').length
@@ -500,7 +511,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   ]
 
   return (
-    <div className="min-h-screen bg-negro flex">
+    <div className={`min-h-screen bg-negro flex ${temaClaro ? 'tema-claro' : ''}`}>
       {/* Mobile header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-negro2 border-b border-marfil/8 px-4 py-3 flex items-center justify-between md:hidden">
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-marfil/50 hover:text-dorado transition-colors">
@@ -551,6 +562,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           ))}
         </nav>
         <div className="p-3 border-t border-marfil/5 space-y-1">
+          <button onClick={toggleTema} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-marfil/25 hover:text-dorado transition-colors">
+            {temaClaro ? <Moon size={12} /> : <Sun size={12} />} Modo {temaClaro ? 'noche' : 'día'}
+          </button>
           <a href="https://aurelio-atelier.vercel.app" target="_blank" rel="noopener noreferrer"
             className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-marfil/25 hover:text-dorado transition-colors">
             <ArrowUpRight size={12} /> Ver sitio web

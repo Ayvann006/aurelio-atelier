@@ -8,7 +8,7 @@ import { getHorariosDisponibles } from '@/lib/utils'
 const citaSchema = z.object({
   cliente_nombre: z.string().min(2),
   cliente_email: z.string().email(),
-  cliente_telefono: z.string().min(8),
+  cliente_telefono: z.string().refine(v => v.replace(/\D/g, '').length >= 8, 'Celular inválido'),
   tipo_evento: z.enum(['novia', 'quinceanera', 'gala', 'miss', 'otro']),
   tipo_cita: z.enum(['primera-entrevista', 'prueba', 'ajuste', 'entrega']),
   fecha: z.string(),

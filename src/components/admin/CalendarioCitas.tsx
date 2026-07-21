@@ -83,6 +83,9 @@ export default function CalendarioCitas({ citas, onActualizar, clientes = [] }: 
     if (!fechaNueva || !horaNueva || !formNueva.cliente_nombre || !formNueva.cliente_email) {
       toast.error('Completá fecha, hora, nombre y email'); return
     }
+    if (formNueva.cliente_telefono.replace(/\D/g, '').length < 8) {
+      toast.error('El celular de la clienta es obligatorio'); return
+    }
     setAgendando(true)
     try {
       const res = await fetch('/api/citas', {
@@ -410,7 +413,7 @@ export default function CalendarioCitas({ citas, onActualizar, clientes = [] }: 
                   <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Nombre *</label><input value={formNueva.cliente_nombre} onChange={e => setFormNueva(f=>({...f,cliente_nombre:e.target.value}))} className="input-dark w-full" /></div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Email *</label><input value={formNueva.cliente_email} onChange={e => setFormNueva(f=>({...f,cliente_email:e.target.value}))} type="email" className="input-dark w-full" /></div>
-                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Teléfono</label><input value={formNueva.cliente_telefono} onChange={e => setFormNueva(f=>({...f,cliente_telefono:e.target.value}))} className="input-dark w-full" /></div>
+                    <div><label className="text-xs text-marfil/40 uppercase tracking-wider block mb-1.5">Teléfono *</label><input value={formNueva.cliente_telefono} onChange={e => setFormNueva(f=>({...f,cliente_telefono:e.target.value}))} type="tel" required className="input-dark w-full" /></div>
                   </div>
                 </div>
               )}
